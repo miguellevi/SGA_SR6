@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGA Acolhimento — Login</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  body { display:flex; align-items:center; justify-content:center; min-height:100vh; }
+  .login-box { width:100%; max-width:380px; }
+  .login-logo { text-align:center; margin-bottom:2rem; }
+  .login-logo img { max-width:300px; }
+  .login-logo .setor { font-size:12px; font-weight:600; color:var(--blue); letter-spacing:2px; margin-top:6px; }
+  .login-logo .sub { font-size:13px; color:var(--text-muted); margin-top:3px; }
+  .login-card { padding:2rem; }
+</style>
+</head>
+<body>
+<div class="login-box">
+  <div class="login-logo">
+    <img src="/img/logo.png" alt="Prefeitura de Fortaleza — Regional 6">
+    <div class="setor">ACOLHIMENTO</div>
+    <div class="sub">Sistema de Gerenciamento de Atendimento</div>
+  </div>
+  <div class="card login-card">
+    <div id="erro" class="alert alert-error" style="display:none"></div>
+    <div class="form-group">
+      <label>Login</label>
+      <input type="text" id="login" placeholder="Digite seu login" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Digite sua senha" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full mt-1" onclick="entrar()">Entrar</button>
+  </div>
+  <p class="text-center text-muted mt-2" style="font-size:12px">Monitor e emissão não requerem login</p>
+  <div class="flex-center gap-2 mt-2" style="justify-content:center;flex-wrap:wrap">
+    <a href="/monitor" class="btn btn-sm">📺 Monitor</a>
+    <a href="/emissao" class="btn btn-sm">🎫 Emissão de Senha</a>
+  </div>
+</div>
+
+<script>
+  // Redireciona se já logado
+  if (localStorage.getItem('sga_token')) {
+    const p = localStorage.getItem('sga_perfil');
+    window.location.href = p === 'coordenador' ? '/coordenador' : '/operador';
+  }
+
+  document.getElementById('senha').addEventListener('keypress', e => { if(e.key==='Enter') entrar(); });
+
+  async function entrar() {
+    const login = document.getElementById('login').value.trim();
+    const senha = document.getElementById('senha').value;
+    if (!login || !senha) { mostrarErro('Preencha login e senha'); return; }
+
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login, senha })
+    }).then(r => r.json());
+
+    if (res.ok) {
+      localStorage.setItem('sga_token',  res.token);
+      localStorage.setItem('sga_perfil', res.perfil);
+      localStorage.setItem('sga_nome',   res.nome);
+      window.location.href = res.perfil === 'coordenador' ? '/coordenador' : '/operador';
+    } else {
+      mostrarErro(res.erro || 'Erro ao entrar');
+    }
+  }
+
+  function mostrarErro(msg) {
+    const el = document.getElementById('erro');
+    el.textContent = msg; el.style.display = 'block';
+  }
+</script>
+</body>
+</html>

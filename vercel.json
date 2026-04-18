@@ -1,0 +1,11 @@
+{
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/monitor",     "destination": "/monitor.html" },
+    { "source": "/emissao",     "destination": "/emissao.html" },
+    { "source": "/login",       "destination": "/login.html" },
+    { "source": "/operador",    "destination": "/operador.html" },
+    { "source": "/coordenador", "destination": "/coordenador.html" },
+    { "source": "/",            "destination": "/login.html" }
+  ]
+}
