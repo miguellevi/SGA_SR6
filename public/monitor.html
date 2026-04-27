@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor — Acolhimento</title>
+<script src="/api/env"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/sga.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: #f0f2f5; color: #1a1a2e; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  header {
+    background: #185FA5;
+    border-bottom: 3px solid #0e4a8a;
+    padding: .8rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    height: 80px;
+  }
+  header img { height: 52px; }
+  .hdr-center { text-align: center; }
+  .hdr-setor { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 6px; text-transform: uppercase; }
+  .hdr-right { text-align: right; }
+  .hdr-hora { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 3px; line-height: 1; }
+  .hdr-data { font-size: 15px; color: #a8d4f5; margin-top: 4px; font-weight: 400; }
+
+  /* ── Layout 50/50 ── */
+  .body-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 3px 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Divisória ── */
+  .divider { background: #d0d8e8; }
+
+  /* ══════════════════════════════
+     LADO ESQUERDO — SGA
+  ══════════════════════════════ */
+  .sga-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    overflow: hidden;
+    background: #f0f2f5;
+  }
+
+  .setor-label {
+    color: #185FA5;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .call-box {
+    background: #ffffff;
+    border: 3px solid #185FA5;
+    border-radius: 20px;
+    padding: 2.5rem 3.5rem;
+    text-align: center;
+    width: 100%;
+    max-width: 520px;
+    transition: border-color .3s;
+    box-shadow: 0 6px 30px rgba(24,95,165,0.15);
+  }
+  .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(200,121,65,0.18); }
+  .pref-label { font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #c87941; text-transform: uppercase; min-height: 22px; margin-bottom: 12px; }
+  .call-senha { font-size: 110px; font-weight: 700; color: #185FA5; line-height: 1; letter-spacing: 6px; }
+  .call-box.pref .call-senha { color: #c87941; }
+  .call-sep { width: 70px; height: 3px; background: #185FA5; margin: 16px auto; display: none; border-radius: 2px; }
+  .call-box.pref .call-sep { background: #c87941; }
+  .call-guiche { font-size: 32px; font-weight: 600; color: #185FA5; letter-spacing: 1px; }
+  .call-box.pref .call-guiche { color: #c87941; }
+  .call-idle { font-size: 22px; color: #b0b8c8; font-weight: 300; }
+
+  .hist-title { font-size: 11px; letter-spacing: 2px; color: #8090a8; text-transform: uppercase; text-align: center; font-weight: 600; }
+  .hist-list { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+  .hist-item { background: #fff; border: 1px solid #d0d8e8; border-radius: 6px; padding: 5px 14px; font-size: 13px; color: #5070a0; }
+  .hist-item.pref { border-color: #f0c090; color: #a06020; background: #fff9f0; }
+
+  .guiches-wrap { text-align: center; }
+  .guiches-grid { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; margin-top: .5rem; }
+  .g-chip { background: #fff; border: 1px solid #d0d8e8; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #8090a8; }
+  .g-chip.ativo { border-color: #185FA5; color: #185FA5; background: #e8f1fb; font-weight: 500; }
+  .g-chip.atendendo { border-color: #2d8a4e; color: #2d8a4e; background: #eafaf0; font-weight: 500; }
+
+  /* ══════════════════════════════
+     LADO DIREITO — NOTÍCIAS
+  ══════════════════════════════ */
+  .news-side {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .news-header {
+    background: #185FA5;
+    border-bottom: none;
+    padding: .65rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-shrink: 0;
+  }
+  .news-header-icon { font-size: 16px; }
+  .news-header-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
+  .news-header-fonte { font-size: 12px; color: #a8d4f5; margin-left: auto; font-weight: 500; }
+
+  /* Notícia em destaque */
+  .news-featured {
+    padding: 1rem 1.25rem;
+    border-bottom: 2px solid #e8f1fb;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .2s;
+    background: #f5f8ff;
+  }
+  .news-featured:hover { background: #e8f1fb; }
+  .news-featured-cat { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #185FA5; text-transform: uppercase; margin-bottom: 6px; }
+  .news-featured-title { font-size: 17px; font-weight: 700; color: #1a2a3a; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #5070a0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-time { font-size: 11px; color: #9090b0; margin-top: 6px; font-weight: 500; }
+
+  /* Lista de notícias */
+  .news-list {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+  }
+  .news-scroll {
+    position: absolute;
+    width: 100%;
+    animation: scrollUp 60s linear infinite;
+  }
+  .news-scroll:hover { animation-play-state: paused; }
+
+  .news-item {
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #e8eef8;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-item:hover { background: #f5f8ff; }
+  .news-item-cat { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #185FA5; text-transform: uppercase; margin-bottom: 3px; }
+  .news-item-title { font-size: 14px; color: #1a2a3a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
+  .news-item-time { font-size: 11px; color: #9090b0; margin-top: 3px; }
+
+  /* Ticker */
+  .news-ticker {
+    background: #185FA5;
+    padding: .45rem 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .news-ticker-inner {
+    display: inline-block;
+    animation: ticker 40s linear infinite;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    letter-spacing: .3px;
+  }
+
+  @keyframes scrollUp {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .new-call { animation: flash .5s ease 4; }
+
+  .news-loading { text-align: center; color: #9090b0; padding: 2rem; font-size: 14px; }
+
+  /* Notícia em destaque */
+  .news-featured {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #0a1628;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-featured:hover { background: #080f20; }
+  .news-featured-cat { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #378add; text-transform: uppercase; margin-bottom: 6px; }
+  .news-featured-title { font-size: 18px; font-weight: 600; color: #e8f0f8; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #4a7fa8; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-time { font-size: 11px; color: #1e3a6a; margin-top: 6px; }
+
+  /* Lista de notícias */
+  .news-list {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .news-scroll {
+    position: absolute;
+    width: 100%;
+    animation: scrollUp 60s linear infinite;
+  }
+  .news-scroll:hover { animation-play-state: paused; }
+
+  .news-item {
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #0a1628;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-item:hover { background: #080f20; }
+  .news-item-cat { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #1e4a7a; text-transform: uppercase; margin-bottom: 3px; }
+  .news-item-title { font-size: 14px; color: #c8d8e8; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-item-time { font-size: 11px; color: #1e3a6a; margin-top: 3px; }
+
+  /* Ticker na parte inferior */
+  .news-ticker {
+    background: #378add;
+    padding: .4rem 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .news-ticker-inner {
+    display: inline-block;
+    animation: ticker 40s linear infinite;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  @keyframes scrollUp {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .new-call { animation: flash .4s ease 3; }
+
+  /* Loading */
+  .news-loading { text-align: center; color: #1e3a6a; padding: 2rem; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/img/logo-branca.png" alt="Prefeitura de Fortaleza — Regional 6">
+  <div class="hdr-center">
+    <div class="hdr-setor">Acolhimento</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-hora" id="hora">00:00:00</div>
+    <div class="hdr-data" id="data-hoje"></div>
+  </div>
+</header>
+
+<div class="body-wrap">
+
+  <!-- ══ LADO ESQUERDO: SGA ══ -->
+  <div class="sga-side">
+    <div class="setor-label">Senhas</div>
+
+    <div class="call-box" id="call-box">
+      <div class="pref-label" id="call-pref"></div>
+      <div class="call-senha" id="call-senha"><span class="call-idle">Aguardando...</span></div>
+      <div class="call-sep" id="call-sep"></div>
+      <div class="call-guiche" id="call-guiche"></div>
+    </div>
+
+    <div id="hist-wrap" style="display:none;text-align:center;width:100%">
+      <div class="hist-title mb-1">Chamadas anteriores</div>
+      <div class="hist-list" id="hist-list"></div>
+    </div>
+
+    <div class="guiches-wrap" style="width:100%">
+      <div class="hist-title" style="margin-bottom:.4rem">Guichês</div>
+      <div class="guiches-grid" id="guiches-grid"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ══ LADO DIREITO: NOTÍCIAS ══ -->
+  <div class="news-side">
+    <div class="news-header">
+      <span class="news-header-icon">📰</span>
+      <span class="news-header-title">Notícias</span>
+      <span class="news-header-fonte" id="news-fonte">Carregando...</span>
+    </div>
+
+    <!-- Notícia em destaque -->
+    <div class="news-featured" id="news-featured" style="display:none" onclick="abrirNoticia(0)">
+      <div class="news-featured-cat" id="nf-cat"></div>
+      <div class="news-featured-title" id="nf-title"></div>
+      <div class="news-featured-desc" id="nf-desc"></div>
+      <div class="news-featured-time" id="nf-time"></div>
+    </div>
+
+    <!-- Lista com scroll automático -->
+    <div class="news-list" id="news-list">
+      <div class="news-loading">Buscando notícias...</div>
+    </div>
+
+    <!-- Ticker -->
+    <div class="news-ticker">
+      <span class="news-ticker-inner" id="news-ticker">Carregando notícias...</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Relógio ──
+  function tick() {
+    const now = new Date();
+    document.getElementById('hora').textContent = now.toLocaleTimeString('pt-BR');
+    const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    document.getElementById('data-hoje').textContent =
+      `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── SGA Realtime ──
+  let historico = [];
+
+  SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
+
+  SGA.on('nova_chamada', c => {
+    mostrarChamada(c, true);
+    historico.unshift(c);
+    if (historico.length > 4) historico.pop();
+    renderHistorico(historico.slice(1));
+  });
+
+  SGA.on('guiches_atualizados', () => {
+    fetch('/api/estado').then(r=>r.json()).then(d => renderGuiches(d.guiches || []));
+  });
+
+  SGA.on('fila_resetada', () => {
+    historico = [];
+    document.getElementById('call-senha').innerHTML = '<span class="call-idle">Aguardando...</span>';
+    document.getElementById('call-pref').textContent = '';
+    document.getElementById('call-guiche').textContent = '';
+    document.getElementById('call-sep').style.display = 'none';
+    document.getElementById('call-box').className = 'call-box';
+    document.getElementById('hist-wrap').style.display = 'none';
+  });
+
+  function mostrarChamada(c, animar) {
+    const box = document.getElementById('call-box');
+    box.className = 'call-box' + (c.preferencial?' pref':'') + (animar?' new-call':'');
+    document.getElementById('call-pref').textContent = c.preferencial ? '★ Atendimento Preferencial' : '';
+    document.getElementById('call-senha').textContent = 'Senha ' + c.num;
+    document.getElementById('call-sep').style.display = 'block';
+    document.getElementById('call-guiche').textContent = c.nomeGuiche;
+  }
+
+  function renderHistorico(hist) {
+    const wrap = document.getElementById('hist-wrap');
+    const list = document.getElementById('hist-list');
+    if (!hist.length) { wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+    list.innerHTML = hist.map(h =>
+      `<div class="hist-item${h.preferencial?' pref':''}">Senha ${h.num} → ${h.nomeGuiche}</div>`
+    ).join('');
+  }
+
+  function renderGuiches(guiches) {
+    document.getElementById('guiches-grid').innerHTML = guiches.map(g => {
+      let cls='g-chip';
+      let label=g.nome;
+      if(g.senha_atual){cls+=' atendendo';label+=` · ${g.senha_atual}`;}
+      else if(g.ativo){cls+=' ativo';}
+      return `<div class="${cls}">${label}${g.atendente?' ('+g.atendente+')':''}</div>`;
+    }).join('');
+  }
+
+  // ── NOTÍCIAS via API interna ──
+  let noticias = [];
+  let destaqueIdx = 0;
+
+  async function buscarNoticias() {
+    try {
+      const res = await fetch('/api/noticias');
+      const data = await res.json();
+
+      if (!data.ok || !data.noticias?.length) throw new Error('sem notícias');
+
+      noticias = data.noticias;
+      document.getElementById('news-fonte').textContent = data.fonte;
+
+      renderNoticias();
+      atualizarTicker();
+
+    } catch (e) {
+      console.warn('Erro notícias:', e.message);
+      document.getElementById('news-list').innerHTML =
+        '<div class="news-loading">Atualizando notícias...</div>';
+      // Tenta novamente em 30s
+      setTimeout(buscarNoticias, 30000);
+    }
+  }
+
+  function renderNoticias() {
+    if (!noticias.length) return;
+
+    // Destaque (primeira notícia)
+    const dest = noticias[0];
+    document.getElementById('news-featured').style.display = 'block';
+    document.getElementById('nf-cat').textContent   = dest.categoria;
+    document.getElementById('nf-title').textContent = dest.titulo;
+    document.getElementById('nf-desc').textContent  = dest.descricao;
+    document.getElementById('nf-time').textContent  = dest.tempo;
+
+    // Lista (restante, duplicado para scroll contínuo)
+    const resto = noticias.slice(1);
+    const html = resto.map((n, i) => `
+      <div class="news-item" onclick="abrirNoticia(${i+1})">
+        <div class="news-item-cat">${n.categoria}</div>
+        <div class="news-item-title">${n.titulo}</div>
+        <div class="news-item-time">${n.tempo}</div>
+      </div>`).join('');
+
+    // Duplica para scroll contínuo sem pular
+    const lista = document.getElementById('news-list');
+    lista.innerHTML = `<div class="news-scroll">${html}${html}</div>`;
+  }
+
+  function atualizarTicker() {
+    if (!noticias.length) return;
+    const textos = noticias.slice(0, 8).map(n => `• ${n.titulo}`).join('   ');
+    document.getElementById('news-ticker').textContent = textos;
+  }
+
+  function abrirNoticia(idx) {
+    const n = noticias[idx];
+    if (n?.link && n.link !== '#') window.open(n.link, '_blank');
+  }
+
+  // Rotaciona destaque a cada 15s
+  function rotacionarDestaque() {
+    if (!noticias.length) return;
+    destaqueIdx = (destaqueIdx + 1) % Math.min(noticias.length, 5);
+    const dest = noticias[destaqueIdx];
+    document.getElementById('nf-cat').textContent   = dest.categoria;
+    document.getElementById('nf-title').textContent = dest.titulo;
+    document.getElementById('nf-desc').textContent  = dest.descricao;
+    document.getElementById('nf-time').textContent  = dest.tempo;
+  }
+
+  // ── Inicialização ──
+  SGA.iniciarRealtime();
+  SGA.carregarEstado();
+  buscarNoticias();
+
+  // Atualiza notícias a cada 15 min, rotaciona destaque a cada 15s
+  setInterval(buscarNoticias,      15 * 60 * 1000);
+  setInterval(rotacionarDestaque,  15 * 1000);
+</script>
+</body>
+</html>

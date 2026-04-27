@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operador — Acolhimento</title>
+<link rel="stylesheet" href="/css/style.css">
+<script src="/api/env"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/sga.js"></script>
+<style>
+  .top-bar{background:var(--white);border-bottom:1px solid var(--border);padding:.75rem 1.25rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .top-bar img{height:38px}
+  .user-info{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:.75rem}
+
+  .setup-screen{max-width:480px;margin:3rem auto;padding:0 1.25rem}
+  .setup-screen h2{font-size:18px;font-weight:600;margin-bottom:.5rem}
+  .setup-screen p{color:var(--text-muted);font-size:14px;margin-bottom:1.5rem}
+  .guiche-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+  .guiche-btn{padding:1rem;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--white);cursor:pointer;text-align:center;transition:all .15s}
+  .guiche-btn:hover:not(:disabled){border-color:var(--blue-mid);background:var(--blue-light)}
+  .guiche-btn:disabled{opacity:.5;cursor:not-allowed;background:var(--gray-light)}
+  .guiche-btn .gn{font-size:15px;font-weight:600;color:var(--blue)}
+  .guiche-btn .ga{font-size:11px;color:var(--text-muted);margin-top:3px}
+  .guiche-btn.ocupado .gn{color:var(--text-muted)}
+
+  .operador-main{max-width:520px;margin:2rem auto;padding:0 1.25rem}
+  .my-guiche-card{background:var(--blue);color:#fff;border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between}
+  .my-guiche-name{font-size:18px;font-weight:600}
+  .my-guiche-sub{font-size:13px;opacity:.8;margin-top:2px}
+
+  .fila-cards{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+  .fila-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center}
+  .fila-card .fc-num{font-size:28px;font-weight:700}
+  .fila-card .fc-label{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .fila-card.pref .fc-num{color:var(--amber)}
+  .fila-card.normal .fc-num{color:var(--blue)}
+
+  .senha-atual{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;text-align:center;margin-bottom:1rem;display:none}
+  .sa-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+  .sa-num{font-size:42px;font-weight:700;color:var(--text);line-height:1}
+  .sa-num.pref{color:var(--amber)}
+  .sa-pref{font-size:12px;color:var(--amber);font-weight:500;margin-top:4px}
+
+  .info-box{background:var(--blue-light);border:1px solid #b5d4f4;border-radius:var(--radius);padding:1.25rem;text-align:center;margin-bottom:1rem}
+  .info-box p{font-size:13px;color:var(--blue);font-weight:500}
+  .info-box small{font-size:12px;color:var(--text-muted)}
+
+  .historico{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;display:none}
+  .hist-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gray-light);font-size:13px}
+  .hist-row:last-child{border-bottom:none}
+  @media(max-width:480px){.guiche-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <img src="/img/logo-colorida.png" alt="Prefeitura de Fortaleza — Regional 6">
+  <div class="user-info">
+    <span id="nome-usuario"></span>
+    <button class="btn btn-sm" onclick="sair()">Sair</button>
+  </div>
+</div>
+
+<!-- Seleção de guichê -->
+<div class="setup-screen" id="setup-screen">
+  <h2>Selecione seu guichê</h2>
+  <p>Escolha o guichê que você irá operar hoje.</p>
+  <div class="guiche-grid" id="guiche-grid">
+    <p style="color:var(--text-muted);font-size:14px">Carregando...</p>
+  </div>
+</div>
+
+<!-- Tela operador -->
+<div class="operador-main" id="operador-main" style="display:none">
+  <div class="my-guiche-card">
+    <div>
+      <div class="my-guiche-name" id="op-guiche-nome"></div>
+      <div class="my-guiche-sub" id="op-atendente"></div>
+    </div>
+    <button class="btn btn-sm"
+      style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)"
+      onclick="liberarGuiche()">Trocar guichê</button>
+  </div>
+
+  <div class="fila-cards">
+    <div class="fila-card normal">
+      <div class="fc-num" id="fila-normal-num">0</div>
+      <div class="fc-label">Normal</div>
+    </div>
+    <div class="fila-card pref">
+      <div class="fc-num" id="fila-pref-num">0</div>
+      <div class="fc-label">Preferencial</div>
+    </div>
+  </div>
+
+  <div class="senha-atual" id="senha-atual-box">
+    <div class="sa-label">Atendendo agora</div>
+    <div class="sa-num" id="sa-num"></div>
+    <div class="sa-pref" id="sa-pref"></div>
+  </div>
+
+  <div class="info-box">
+    <p>O Coordenador irá direcionar as senhas para seu guichê.</p>
+    <small>Aguarde a chamada aparecer acima.</small>
+  </div>
+
+  <div class="historico" id="historico-wrap">
+    <div class="card-title">Últimas chamadas</div>
+    <div id="historico-list"></div>
+  </div>
+</div>
+
+<script>
+  // Verifica autenticação
+  if (!SGA.token) window.location.href = '/login';
+
+  let meuGuiche = null;
+
+  document.getElementById('nome-usuario').textContent = SGA.nome;
+
+  // ── Realtime ──
+  SGA.on('estado_inicial', d => {
+    renderGuicheGrid(d.guiches || []);
+    atualizarFila(d.filaNormalQtd, d.filaPrefQtd);
+  });
+
+  SGA.on('nova_chamada', c => {
+    atualizarFila(c.filaNormalQtd ?? 0, c.filaPrefQtd ?? 0);
+    if (meuGuiche && c.guicheId === meuGuiche.id) {
+      mostrarSenhaAtual(c);
+      adicionarHistorico(c);
+    }
+    // Recarrega guichês para manter grid atualizado
+    fetch('/api/estado').then(r=>r.json()).then(d => {
+      if (!meuGuiche) renderGuicheGrid(d.guiches || []);
+      atualizarFila(d.filaNormalQtd, d.filaPrefQtd);
+    });
+  });
+
+  SGA.on('guiches_atualizados', () => {
+    fetch('/api/estado').then(r=>r.json()).then(d => {
+      if (!meuGuiche) renderGuicheGrid(d.guiches || []);
+    });
+  });
+
+  SGA.on('fila_atualizada', d => atualizarFila(d.filaNormalQtd, d.filaPrefQtd));
+
+  SGA.on('fila_resetada', () => {
+    atualizarFila(0, 0);
+    document.getElementById('senha-atual-box').style.display = 'none';
+    document.getElementById('historico-wrap').style.display = 'none';
+    document.getElementById('historico-list').innerHTML = '';
+  });
+
+  function renderGuicheGrid(guiches) {
+    if (meuGuiche) return;
+    const c = document.getElementById('guiche-grid');
+    c.innerHTML = guiches.map(g => `
+      <button class="guiche-btn ${g.atendente && g.atendente !== SGA.nome ? 'ocupado' : ''}"
+        onclick="selecionarGuiche(${g.id}, '${g.nome}')"
+        ${g.atendente && g.atendente !== SGA.nome ? 'disabled' : ''}>
+        <div class="gn">${g.nome}</div>
+        <div class="ga">${g.atendente || 'Disponível'}</div>
+      </button>`).join('');
+  }
+
+  async function selecionarGuiche(id, nome) {
+    const res = await SGA.fetch('/api/guiche?acao=registrar', {
+      method: 'POST', body: { guicheId: id }
+    });
+    if (!res.ok) { alert(res.erro); return; }
+    meuGuiche = { id, nome };
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('operador-main').style.display = 'block';
+    document.getElementById('op-guiche-nome').textContent = nome;
+    document.getElementById('op-atendente').textContent = SGA.nome;
+  }
+
+  async function liberarGuiche() {
+    if (!meuGuiche) return;
+    await SGA.fetch('/api/guiche?acao=liberar', {
+      method: 'POST', body: { guicheId: meuGuiche.id }
+    });
+    meuGuiche = null;
+    document.getElementById('setup-screen').style.display = 'block';
+    document.getElementById('operador-main').style.display = 'none';
+    SGA.carregarEstado();
+  }
+
+  function mostrarSenhaAtual(c) {
+    const box = document.getElementById('senha-atual-box');
+    box.style.display = 'block';
+    const numEl = document.getElementById('sa-num');
+    numEl.textContent = 'Senha ' + c.num;
+    numEl.className = 'sa-num' + (c.preferencial ? ' pref' : '');
+    document.getElementById('sa-pref').textContent = c.preferencial ? '★ Preferencial' : '';
+  }
+
+  function adicionarHistorico(c) {
+    const wrap = document.getElementById('historico-wrap');
+    const list = document.getElementById('historico-list');
+    wrap.style.display = 'block';
+    const row = document.createElement('div');
+    row.className = 'hist-row';
+    row.innerHTML = `
+      <span><strong>${c.num}</strong>${c.preferencial ? ' <span class="badge badge-amber" style="font-size:10px">Pref</span>' : ''}</span>
+      <span class="text-muted">${c.hora}</span>`;
+    list.prepend(row);
+    if (list.children.length > 8) list.lastChild.remove();
+  }
+
+  function atualizarFila(normal, pref) {
+    document.getElementById('fila-normal-num').textContent = normal;
+    document.getElementById('fila-pref-num').textContent   = pref;
+  }
+
+  async function sair() {
+    if (meuGuiche) await liberarGuiche();
+    SGA.limparSessao();
+    window.location.href = '/login';
+  }
+
+  // Libera guichê ao fechar a aba/navegador
+  window.addEventListener('beforeunload', () => {
+    if (meuGuiche) {
+      navigator.sendBeacon('/api/guiche?acao=liberar',
+        JSON.stringify({ guicheId: meuGuiche.id }));
+    }
+  });
+
+  SGA.iniciarRealtime();
+  SGA.carregarEstado();
+</script>
+</body>
+</html>
