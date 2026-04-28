@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor — Acolhimento</title>
+<script src="/api/env"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/js/sga.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { background: #f0f2f5; color: #1a1a2e; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; }
+
+  /* ── Header ── */
+  header {
+    background: #FF6D2D;
+    border-bottom: 3px solid #e05520;
+    padding: .8rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    height: 80px;
+  }
+  header img { height: 52px; }
+  .hdr-center { text-align: center; }
+  .hdr-setor { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 6px; text-transform: uppercase; }
+  .hdr-right { text-align: right; }
+  .hdr-hora { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 3px; line-height: 1; }
+  .hdr-data { font-size: 15px; color: #ffe0d0; margin-top: 4px; font-weight: 400; }
+
+  /* ── Layout 50/50 ── */
+  .body-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 3px 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Divisória ── */
+  .divider { background: #ffd0b0; }
+
+  /* ══════════════════════════════
+     LADO ESQUERDO — SGA
+  ══════════════════════════════ */
+  .sga-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    overflow: hidden;
+    background: #f0f2f5;
+  }
+
+  .setor-label {
+    color: #FF6D2D;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .call-box {
+    background: #ffffff;
+    border: 3px solid #FF6D2D;
+    border-radius: 20px;
+    padding: 2.5rem 3.5rem;
+    text-align: center;
+    width: 100%;
+    max-width: 520px;
+    transition: border-color .3s;
+    box-shadow: 0 6px 30px rgba(255,109,45,0.15);
+  }
+  .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(255,109,45,0.18); }
+  .pref-label { font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #c87941; text-transform: uppercase; min-height: 22px; margin-bottom: 12px; }
+  .call-senha { font-size: 110px; font-weight: 700; color: #FF6D2D; line-height: 1; letter-spacing: 6px; }
+  .call-box.pref .call-senha { color: #c87941; }
+  .call-sep { width: 70px; height: 3px; background: #FF6D2D; margin: 16px auto; display: none; border-radius: 2px; }
+  .call-box.pref .call-sep { background: #c87941; }
+  .call-guiche { font-size: 32px; font-weight: 600; color: #FF6D2D; letter-spacing: 1px; }
+  .call-box.pref .call-guiche { color: #c87941; }
+  .call-idle { font-size: 22px; color: #b0b8c8; font-weight: 300; }
+
+  .hist-title { font-size: 11px; letter-spacing: 2px; color: #b05030; text-transform: uppercase; text-align: center; font-weight: 600; }
+  .hist-list { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
+  .hist-item { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 13px; color: #c04010; }
+  .hist-item.pref { border-color: #f0c090; color: #a06020; background: #fff9f0; }
+
+  .guiches-wrap { text-align: center; }
+  .guiches-grid { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; margin-top: .5rem; }
+  .g-chip { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #b05030; }
+  .g-chip.ativo { border-color: #FF6D2D; color: #FF6D2D; background: #fff3ee; font-weight: 500; }
+  .g-chip.atendendo { border-color: #2d8a4e; color: #2d8a4e; background: #eafaf0; font-weight: 500; }
+
+  /* ══════════════════════════════
+     LADO DIREITO — NOTÍCIAS
+  ══════════════════════════════ */
+  .news-side {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .video-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .video-wrap iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* Notícia em destaque */
+  .news-featured {
+    padding: 1rem 1.25rem;
+    border-bottom: 2px solid #fff3ee;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .2s;
+    background: #f5f8ff;
+  }
+  .news-featured:hover { background: #fff3ee; }
+  .news-featured-cat { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 6px; }
+  .news-featured-title { font-size: 17px; font-weight: 700; color: #1a1a1a; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #c04010; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-time { font-size: 11px; color: #888888; margin-top: 6px; font-weight: 500; }
+
+  /* Lista de notícias */
+  .news-list {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: #fff;
+  }
+  .news-scroll {
+    position: absolute;
+    width: 100%;
+    animation: scrollUp 60s linear infinite;
+  }
+  .news-scroll:hover { animation-play-state: paused; }
+
+  .news-item {
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #e8eef8;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-item:hover { background: #f5f8ff; }
+  .news-item-cat { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 3px; }
+  .news-item-title { font-size: 14px; color: #1a1a1a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
+  .news-item-time { font-size: 11px; color: #888888; margin-top: 3px; }
+
+  /* Ticker */
+  .news-ticker {
+    background: #FF6D2D;
+    padding: .45rem 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .news-ticker-inner {
+    display: inline-block;
+    animation: ticker 40s linear infinite;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    letter-spacing: .3px;
+  }
+
+  @keyframes scrollUp {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .new-call { animation: flash .5s ease 4; }
+
+  .news-loading { text-align: center; color: #888888; padding: 2rem; font-size: 14px; }
+
+  /* Notícia em destaque */
+  .news-featured {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #0a1628;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-featured:hover { background: #080f20; }
+  .news-featured-cat { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #378add; text-transform: uppercase; margin-bottom: 6px; }
+  .news-featured-title { font-size: 18px; font-weight: 600; color: #e8f0f8; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #4a7fa8; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-time { font-size: 11px; color: #1e3a6a; margin-top: 6px; }
+
+  /* Lista de notícias */
+  .news-list {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .news-scroll {
+    position: absolute;
+    width: 100%;
+    animation: scrollUp 60s linear infinite;
+  }
+  .news-scroll:hover { animation-play-state: paused; }
+
+  .news-item {
+    padding: .85rem 1.25rem;
+    border-bottom: 1px solid #0a1628;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .news-item:hover { background: #080f20; }
+  .news-item-cat { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #1e4a7a; text-transform: uppercase; margin-bottom: 3px; }
+  .news-item-title { font-size: 14px; color: #c8d8e8; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-item-time { font-size: 11px; color: #1e3a6a; margin-top: 3px; }
+
+  /* Ticker na parte inferior */
+  .news-ticker {
+    background: #378add;
+    padding: .4rem 1rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .news-ticker-inner {
+    display: inline-block;
+    animation: ticker 40s linear infinite;
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+  }
+
+  @keyframes scrollUp {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  @keyframes ticker {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .new-call { animation: flash .4s ease 3; }
+
+  /* Loading */
+  .news-loading { text-align: center; color: #1e3a6a; padding: 2rem; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <img src="/img/logo-branca.png" alt="Prefeitura de Fortaleza — Regional 6">
+  <div class="hdr-center">
+    <div class="hdr-setor">Acolhimento</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-hora" id="hora">00:00:00</div>
+    <div class="hdr-data" id="data-hoje"></div>
+  </div>
+</header>
+
+<div class="body-wrap">
+
+  <!-- ══ LADO ESQUERDO: SGA ══ -->
+  <div class="sga-side">
+    <div class="setor-label">Senhas</div>
+
+    <div class="call-box" id="call-box">
+      <div class="pref-label" id="call-pref"></div>
+      <div class="call-senha" id="call-senha"><span class="call-idle">Aguardando...</span></div>
+      <div class="call-sep" id="call-sep"></div>
+      <div class="call-guiche" id="call-guiche"></div>
+    </div>
+
+    <div id="hist-wrap" style="display:none;text-align:center;width:100%">
+      <div class="hist-title mb-1">Chamadas anteriores</div>
+      <div class="hist-list" id="hist-list"></div>
+    </div>
+
+    <div class="guiches-wrap" style="width:100%">
+      <div class="hist-title" style="margin-bottom:.4rem">Guichês</div>
+      <div class="guiches-grid" id="guiches-grid"></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ══ LADO DIREITO: VÍDEO ══ -->
+  <div class="news-side">
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0](https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0"
+        allow="autoplay; encrypted-media; fullscreen"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── Relógio ──
+  function tick() {
+    const now = new Date();
+    document.getElementById('hora').textContent = now.toLocaleTimeString('pt-BR');
+    const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    document.getElementById('data-hoje').textContent =
+      `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+  }
+  tick(); setInterval(tick, 1000);
+
+  // ── Sistema de Som ──────────────────────────────────────────────────────────
+  let audioCtx = null;
+
+  // Inicializa o AudioContext após interação do usuário (exigência dos navegadores)
+  function iniciarAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+  document.addEventListener('click', iniciarAudio, { once: true });
+  document.addEventListener('keydown', iniciarAudio, { once: true });
+
+  // Toca um bipe com frequência e duração configuráveis
+  function tocarBipe(frequencia, duracao, volume = 0.6) {
+    if (!audioCtx) {
+      // Tenta criar sem interação (funciona em alguns navegadores)
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { return; }
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duracao);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + duracao);
+  }
+
+  // Sequência de bipes para chamada normal: dois bipes médios
+  function tocarAlertaNormal() {
+    tocarBipe(880, 0.18, 0.5);                          // Lá5 — primeiro bipe
+    setTimeout(() => tocarBipe(880, 0.18, 0.5), 250);   // Lá5 — segundo bipe
+  }
+
+  // Sequência de bipes para preferencial: três bipes mais graves e longos
+  function tocarAlertaPreferencial() {
+    tocarBipe(660, 0.22, 0.6);                          // Mi5
+    setTimeout(() => tocarBipe(780, 0.22, 0.6), 280);   // Sol5#
+    setTimeout(() => tocarBipe(990, 0.28, 0.6), 560);   // Si5
+  }
+
+  function tocarAlerta(preferencial) {
+    if (preferencial) tocarAlertaPreferencial();
+    else tocarAlertaNormal();
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── SGA Realtime ──
+  let historico = [];
+
+  SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
+
+  SGA.on('nova_chamada', c => {
+    tocarAlerta(c.preferencial);   // 🔊 toca o bipe
+    mostrarChamada(c, true);
+    historico.unshift(c);
+    if (historico.length > 4) historico.pop();
+    renderHistorico(historico.slice(1));
+  });
+
+  SGA.on('guiches_atualizados', () => {
+    fetch('/api/estado').then(r=>r.json()).then(d => renderGuiches(d.guiches || []));
+  });
+
+  SGA.on('fila_resetada', () => {
+    historico = [];
+    document.getElementById('call-senha').innerHTML = '<span class="call-idle">Aguardando...</span>';
+    document.getElementById('call-pref').textContent = '';
+    document.getElementById('call-guiche').textContent = '';
+    document.getElementById('call-sep').style.display = 'none';
+    document.getElementById('call-box').className = 'call-box';
+    document.getElementById('hist-wrap').style.display = 'none';
+  });
+
+  function mostrarChamada(c, animar) {
+    const box = document.getElementById('call-box');
+    box.className = 'call-box' + (c.preferencial?' pref':'') + (animar?' new-call':'');
+    document.getElementById('call-pref').textContent = c.preferencial ? '★ Atendimento Preferencial' : '';
+    document.getElementById('call-senha').textContent = 'Senha ' + c.num;
+    document.getElementById('call-sep').style.display = 'block';
+    document.getElementById('call-guiche').textContent = c.nomeGuiche;
+  }
+
+  function renderHistorico(hist) {
+    const wrap = document.getElementById('hist-wrap');
+    const list = document.getElementById('hist-list');
+    if (!hist.length) { wrap.style.display='none'; return; }
+    wrap.style.display = 'block';
+    list.innerHTML = hist.map(h =>
+      `<div class="hist-item${h.preferencial?' pref':''}">Senha ${h.num} → ${h.nomeGuiche}</div>`
+    ).join('');
+  }
+
+  function renderGuiches(guiches) {
+    document.getElementById('guiches-grid').innerHTML = guiches.map(g => {
+      let cls='g-chip';
+      let label=g.nome;
+      if(g.senha_atual){cls+=' atendendo';label+=` · ${g.senha_atual}`;}
+      else if(g.ativo){cls+=' ativo';}
+      return `<div class="${cls}">${label}${g.atendente?' ('+g.atendente+')':''}</div>`;
+    }).join('');
+  }
+
+  // ── Inicialização ──
+  SGA.iniciarRealtime();
+  SGA.carregarEstado();
+</script>
+</body>
+</html>
