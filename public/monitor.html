@@ -102,6 +102,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+<<<<<<< HEAD
     background: #ffffff;
   }
 
@@ -117,6 +118,24 @@
   .news-header-icon { font-size: 16px; }
   .news-header-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
   .news-header-fonte { font-size: 12px; color: #ffe0d0; margin-left: auto; font-weight: 500; }
+=======
+    background: #000;
+  }
+
+  .video-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .video-wrap iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+>>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
 
   /* Notícia em destaque */
   .news-featured {
@@ -298,6 +317,7 @@
 
   <div class="divider"></div>
 
+<<<<<<< HEAD
   <!-- ══ LADO DIREITO: NOTÍCIAS ══ -->
   <div class="news-side">
     <div class="news-header">
@@ -322,6 +342,16 @@
     <!-- Ticker -->
     <div class="news-ticker">
       <span class="news-ticker-inner" id="news-ticker">Carregando notícias...</span>
+=======
+  <!-- ══ LADO DIREITO: VÍDEO ══ -->
+  <div class="news-side">
+    <div class="video-wrap">
+      <iframe
+        src="https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0](https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0"
+        allow="autoplay; encrypted-media; fullscreen"
+        allowfullscreen>
+      </iframe>
+>>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
     </div>
   </div>
 
@@ -445,6 +475,7 @@
     }).join('');
   }
 
+<<<<<<< HEAD
   // ── NOTÍCIAS via API interna ──
   let noticias = [];
   let destaqueIdx = 0;
@@ -526,6 +557,11 @@
   // Atualiza notícias a cada 15 min, rotaciona destaque a cada 15s
   setInterval(buscarNoticias,      15 * 60 * 1000);
   setInterval(rotacionarDestaque,  15 * 1000);
+=======
+  // ── Inicialização ──
+  SGA.iniciarRealtime();
+  SGA.carregarEstado();
+>>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
 </script>
 </body>
 </html>
