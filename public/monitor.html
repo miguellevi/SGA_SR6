@@ -102,23 +102,6 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-<<<<<<< HEAD
-    background: #ffffff;
-  }
-
-  .news-header {
-    background: #FF6D2D;
-    border-bottom: none;
-    padding: .65rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    flex-shrink: 0;
-  }
-  .news-header-icon { font-size: 16px; }
-  .news-header-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
-  .news-header-fonte { font-size: 12px; color: #ffe0d0; margin-left: auto; font-weight: 500; }
-=======
     background: #000;
   }
 
@@ -135,7 +118,6 @@
     height: 100%;
     border: none;
   }
->>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
 
   /* Notícia em destaque */
   .news-featured {
@@ -317,32 +299,6 @@
 
   <div class="divider"></div>
 
-<<<<<<< HEAD
-  <!-- ══ LADO DIREITO: NOTÍCIAS ══ -->
-  <div class="news-side">
-    <div class="news-header">
-      <span class="news-header-icon">📰</span>
-      <span class="news-header-title">Notícias</span>
-      <span class="news-header-fonte" id="news-fonte">Carregando...</span>
-    </div>
-
-    <!-- Notícia em destaque -->
-    <div class="news-featured" id="news-featured" style="display:none" onclick="abrirNoticia(0)">
-      <div class="news-featured-cat" id="nf-cat"></div>
-      <div class="news-featured-title" id="nf-title"></div>
-      <div class="news-featured-desc" id="nf-desc"></div>
-      <div class="news-featured-time" id="nf-time"></div>
-    </div>
-
-    <!-- Lista com scroll automático -->
-    <div class="news-list" id="news-list">
-      <div class="news-loading">Buscando notícias...</div>
-    </div>
-
-    <!-- Ticker -->
-    <div class="news-ticker">
-      <span class="news-ticker-inner" id="news-ticker">Carregando notícias...</span>
-=======
   <!-- ══ LADO DIREITO: VÍDEO ══ -->
   <div class="news-side">
     <div class="video-wrap">
@@ -351,7 +307,6 @@
         allow="autoplay; encrypted-media; fullscreen"
         allowfullscreen>
       </iframe>
->>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
     </div>
   </div>
 
@@ -475,93 +430,9 @@
     }).join('');
   }
 
-<<<<<<< HEAD
-  // ── NOTÍCIAS via API interna ──
-  let noticias = [];
-  let destaqueIdx = 0;
-
-  async function buscarNoticias() {
-    try {
-      const res = await fetch('/api/noticias');
-      const data = await res.json();
-
-      if (!data.ok || !data.noticias?.length) throw new Error('sem notícias');
-
-      noticias = data.noticias;
-      document.getElementById('news-fonte').textContent = data.fonte;
-
-      renderNoticias();
-      atualizarTicker();
-
-    } catch (e) {
-      console.warn('Erro notícias:', e.message);
-      document.getElementById('news-list').innerHTML =
-        '<div class="news-loading">Atualizando notícias...</div>';
-      // Tenta novamente em 30s
-      setTimeout(buscarNoticias, 30000);
-    }
-  }
-
-  function renderNoticias() {
-    if (!noticias.length) return;
-
-    // Destaque (primeira notícia)
-    const dest = noticias[0];
-    document.getElementById('news-featured').style.display = 'block';
-    document.getElementById('nf-cat').textContent   = dest.categoria;
-    document.getElementById('nf-title').textContent = dest.titulo;
-    document.getElementById('nf-desc').textContent  = dest.descricao;
-    document.getElementById('nf-time').textContent  = dest.tempo;
-
-    // Lista (restante, duplicado para scroll contínuo)
-    const resto = noticias.slice(1);
-    const html = resto.map((n, i) => `
-      <div class="news-item" onclick="abrirNoticia(${i+1})">
-        <div class="news-item-cat">${n.categoria}</div>
-        <div class="news-item-title">${n.titulo}</div>
-        <div class="news-item-time">${n.tempo}</div>
-      </div>`).join('');
-
-    // Duplica para scroll contínuo sem pular
-    const lista = document.getElementById('news-list');
-    lista.innerHTML = `<div class="news-scroll">${html}${html}</div>`;
-  }
-
-  function atualizarTicker() {
-    if (!noticias.length) return;
-    const textos = noticias.slice(0, 8).map(n => `• ${n.titulo}`).join('   ');
-    document.getElementById('news-ticker').textContent = textos;
-  }
-
-  function abrirNoticia(idx) {
-    const n = noticias[idx];
-    if (n?.link && n.link !== '#') window.open(n.link, '_blank');
-  }
-
-  // Rotaciona destaque a cada 15s
-  function rotacionarDestaque() {
-    if (!noticias.length) return;
-    destaqueIdx = (destaqueIdx + 1) % Math.min(noticias.length, 5);
-    const dest = noticias[destaqueIdx];
-    document.getElementById('nf-cat').textContent   = dest.categoria;
-    document.getElementById('nf-title').textContent = dest.titulo;
-    document.getElementById('nf-desc').textContent  = dest.descricao;
-    document.getElementById('nf-time').textContent  = dest.tempo;
-  }
-
   // ── Inicialização ──
   SGA.iniciarRealtime();
   SGA.carregarEstado();
-  buscarNoticias();
-
-  // Atualiza notícias a cada 15 min, rotaciona destaque a cada 15s
-  setInterval(buscarNoticias,      15 * 60 * 1000);
-  setInterval(rotacionarDestaque,  15 * 1000);
-=======
-  // ── Inicialização ──
-  SGA.iniciarRealtime();
-  SGA.carregarEstado();
->>>>>>> de63352281761ca7a75c735ac8f866c42aa9048a
 </script>
 </body>
 </html>
