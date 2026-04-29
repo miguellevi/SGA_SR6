@@ -14,8 +14,8 @@
 
   /* ── Header ── */
   header {
-    background: #ff6d2d;
-    border-bottom: 3px solid #FF3F34;
+    background: #FF6D2D;
+    border-bottom: 3px solid #e05520;
     padding: .8rem 1.75rem;
     display: flex;
     align-items: center;
@@ -28,7 +28,7 @@
   .hdr-setor { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 6px; text-transform: uppercase; }
   .hdr-right { text-align: right; }
   .hdr-hora { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 3px; line-height: 1; }
-  .hdr-data { font-size: 15px; color: #fff; margin-top: 4px; font-weight: 400; }
+  .hdr-data { font-size: 15px; color: #ffe0d0; margin-top: 4px; font-weight: 400; }
 
   /* ── Layout 50/50 ── */
   .body-wrap {
@@ -39,7 +39,7 @@
   }
 
   /* ── Divisória ── */
-  .divider { background: #d0d8e8; }
+  .divider { background: #ffd0b0; }
 
   /* ══════════════════════════════
      LADO ESQUERDO — SGA
@@ -72,27 +72,27 @@
     width: 100%;
     max-width: 520px;
     transition: border-color .3s;
-    box-shadow: 0 6px 30px rgba(24,95,165,0.15);
+    box-shadow: 0 6px 30px rgba(255,109,45,0.15);
   }
-  .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(200,121,65,0.18); }
+  .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(255,109,45,0.18); }
   .pref-label { font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #c87941; text-transform: uppercase; min-height: 22px; margin-bottom: 12px; }
-  .call-senha { font-size: 110px; font-weight: 700; color: #185FA5; line-height: 1; letter-spacing: 6px; }
+  .call-senha { font-size: 110px; font-weight: 700; color: #FF6D2D; line-height: 1; letter-spacing: 6px; }
   .call-box.pref .call-senha { color: #c87941; }
-  .call-sep { width: 70px; height: 3px; background: #185FA5; margin: 16px auto; display: none; border-radius: 2px; }
+  .call-sep { width: 70px; height: 3px; background: #FF6D2D; margin: 16px auto; display: none; border-radius: 2px; }
   .call-box.pref .call-sep { background: #c87941; }
-  .call-guiche { font-size: 32px; font-weight: 600; color: #185FA5; letter-spacing: 1px; }
+  .call-guiche { font-size: 32px; font-weight: 600; color: #FF6D2D; letter-spacing: 1px; }
   .call-box.pref .call-guiche { color: #c87941; }
   .call-idle { font-size: 22px; color: #b0b8c8; font-weight: 300; }
 
-  .hist-title { font-size: 11px; letter-spacing: 2px; color: #8090a8; text-transform: uppercase; text-align: center; font-weight: 600; }
+  .hist-title { font-size: 11px; letter-spacing: 2px; color: #b05030; text-transform: uppercase; text-align: center; font-weight: 600; }
   .hist-list { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
-  .hist-item { background: #fff; border: 1px solid #d0d8e8; border-radius: 6px; padding: 5px 14px; font-size: 13px; color: #5070a0; }
+  .hist-item { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 13px; color: #c04010; }
   .hist-item.pref { border-color: #f0c090; color: #a06020; background: #fff9f0; }
 
   .guiches-wrap { text-align: center; }
   .guiches-grid { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; margin-top: .5rem; }
-  .g-chip { background: #fff; border: 1px solid #d0d8e8; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #8090a8; }
-  .g-chip.ativo { border-color: #185FA5; color: #185FA5; background: #e8f1fb; font-weight: 500; }
+  .g-chip { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #b05030; }
+  .g-chip.ativo { border-color: #FF6D2D; color: #FF6D2D; background: #fff3ee; font-weight: 500; }
   .g-chip.atendendo { border-color: #2d8a4e; color: #2d8a4e; background: #eafaf0; font-weight: 500; }
 
   /* ══════════════════════════════
@@ -106,7 +106,7 @@
   }
 
   .news-header {
-    background: #ff6d2d;
+    background: #FF6D2D;
     border-bottom: none;
     padding: .65rem 1.25rem;
     display: flex;
@@ -116,22 +116,22 @@
   }
   .news-header-icon { font-size: 16px; }
   .news-header-title { font-size: 14px; font-weight: 700; color: #fff; letter-spacing: 2px; text-transform: uppercase; }
-  .news-header-fonte { font-size: 12px; color: #fff; margin-left: auto; font-weight: 500; }
+  .news-header-fonte { font-size: 12px; color: #ffe0d0; margin-left: auto; font-weight: 500; }
 
   /* Notícia em destaque */
   .news-featured {
     padding: 1rem 1.25rem;
-    border-bottom: 2px solid #e8f1fb;
+    border-bottom: 2px solid #fff3ee;
     flex-shrink: 0;
     cursor: pointer;
     transition: background .2s;
     background: #f5f8ff;
   }
-  .news-featured:hover { background: #e8f1fb; }
-  .news-featured-cat { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #000; text-transform: uppercase; margin-bottom: 6px; }
-  .news-featured-title { font-size: 17px; font-weight: 700; color: #000; line-height: 1.35; margin-bottom: 6px; }
-  .news-featured-desc { font-size: 13px; color: #5070a0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-featured-time { font-size: 11px; color: #9090b0; margin-top: 6px; font-weight: 500; }
+  .news-featured:hover { background: #fff3ee; }
+  .news-featured-cat { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 6px; }
+  .news-featured-title { font-size: 17px; font-weight: 700; color: #1a1a1a; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #c04010; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-time { font-size: 11px; color: #888888; margin-top: 6px; font-weight: 500; }
 
   /* Lista de notícias */
   .news-list {
@@ -154,9 +154,9 @@
     transition: background .2s;
   }
   .news-item:hover { background: #f5f8ff; }
-  .news-item-cat { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #185FA5; text-transform: uppercase; margin-bottom: 3px; }
-  .news-item-title { font-size: 14px; color: #1a2a3a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
-  .news-item-time { font-size: 11px; color: #9090b0; margin-top: 3px; }
+  .news-item-cat { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 3px; }
+  .news-item-title { font-size: 14px; color: #1a1a1a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
+  .news-item-time { font-size: 11px; color: #888888; margin-top: 3px; }
 
   /* Ticker */
   .news-ticker {
@@ -187,7 +187,7 @@
   @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.5} }
   .new-call { animation: flash .5s ease 4; }
 
-  .news-loading { text-align: center; color: #9090b0; padding: 2rem; font-size: 14px; }
+  .news-loading { text-align: center; color: #888888; padding: 2rem; font-size: 14px; }
 
   /* Notícia em destaque */
   .news-featured {
@@ -199,8 +199,8 @@
   }
   .news-featured:hover { background: #080f20; }
   .news-featured-cat { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #378add; text-transform: uppercase; margin-bottom: 6px; }
-  .news-featured-title { font-size: 18px; font-weight: 600; color: #07393C; line-height: 1.35; margin-bottom: 6px; }
-  .news-featured-desc { font-size: 13px; color: #2C666E; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-featured-title { font-size: 18px; font-weight: 600; color: #e8f0f8; line-height: 1.35; margin-bottom: 6px; }
+  .news-featured-desc { font-size: 13px; color: #4a7fa8; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .news-featured-time { font-size: 11px; color: #1e3a6a; margin-top: 6px; }
 
   /* Lista de notícias */
@@ -224,12 +224,12 @@
   }
   .news-item:hover { background: #080f20; }
   .news-item-cat { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #1e4a7a; text-transform: uppercase; margin-bottom: 3px; }
-  .news-item-title { font-size: 14px; color: #07393C; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .news-item-title { font-size: 14px; color: #c8d8e8; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .news-item-time { font-size: 11px; color: #1e3a6a; margin-top: 3px; }
 
   /* Ticker na parte inferior */
   .news-ticker {
-    background: #FF6D2D;
+    background: #378add;
     padding: .4rem 1rem;
     overflow: hidden;
     flex-shrink: 0;
@@ -339,12 +339,63 @@
   }
   tick(); setInterval(tick, 1000);
 
+  // ── Sistema de Som ──────────────────────────────────────────────────────────
+  let audioCtx = null;
+
+  // Inicializa o AudioContext após interação do usuário (exigência dos navegadores)
+  function iniciarAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+  document.addEventListener('click', iniciarAudio, { once: true });
+  document.addEventListener('keydown', iniciarAudio, { once: true });
+
+  // Toca um bipe com frequência e duração configuráveis
+  function tocarBipe(frequencia, duracao, volume = 0.6) {
+    if (!audioCtx) {
+      // Tenta criar sem interação (funciona em alguns navegadores)
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch(e) { return; }
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duracao);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + duracao);
+  }
+
+  // Sequência de bipes para chamada normal: dois bipes médios
+  function tocarAlertaNormal() {
+    tocarBipe(880, 0.18, 0.5);                          // Lá5 — primeiro bipe
+    setTimeout(() => tocarBipe(880, 0.18, 0.5), 250);   // Lá5 — segundo bipe
+  }
+
+  // Sequência de bipes para preferencial: três bipes mais graves e longos
+  function tocarAlertaPreferencial() {
+    tocarBipe(660, 0.22, 0.6);                          // Mi5
+    setTimeout(() => tocarBipe(780, 0.22, 0.6), 280);   // Sol5#
+    setTimeout(() => tocarBipe(990, 0.28, 0.6), 560);   // Si5
+  }
+
+  function tocarAlerta(preferencial) {
+    if (preferencial) tocarAlertaPreferencial();
+    else tocarAlertaNormal();
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
   // ── SGA Realtime ──
   let historico = [];
 
   SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
 
   SGA.on('nova_chamada', c => {
+    tocarAlerta(c.preferencial);   // 🔊 toca o bipe
     mostrarChamada(c, true);
     historico.unshift(c);
     if (historico.length > 4) historico.pop();
