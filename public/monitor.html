@@ -299,14 +299,12 @@
 
   <div class="divider"></div>
 
-  <!-- ══ LADO DIREITO: VÍDEO ══ -->
+  <!-- ══ LADO DIREITO: VÍDEOS ══ -->
   <div class="news-side">
     <div class="video-wrap">
-      <iframe
-        src="https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0](https://www.youtube.com/embed/M5Mof0JAUI0?autoplay=1&mute=0&loop=1&playlist=M5Mof0JAUI0&controls=0&modestbranding=1&rel=0&showinfo=0"
-        allow="autoplay; encrypted-media; fullscreen"
-        allowfullscreen>
-      </iframe>
+      <video id="player" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover">
+        <source src="" type="video/mp4">
+      </video>
     </div>
   </div>
 
@@ -429,6 +427,41 @@
       return `<div class="${cls}">${label}${g.atendente?' ('+g.atendente+')':''}</div>`;
     }).join('');
   }
+
+  // ── Player de Vídeos em Loop ──────────────────────────────────────────────
+  const VIDEOS = [
+    'https://github.com/miguellevi/SGA_SR6/raw/refs/heads/main/videos/Video%2001.mp4',
+    'https://github.com/miguellevi/SGA_SR6/raw/refs/heads/main/videos/Video%2002.mp4',
+    'https://github.com/miguellevi/SGA_SR6/raw/refs/heads/main/videos/Video%2003.mp4',
+  ];
+
+  let videoAtual = 0;
+  const player = document.getElementById('player');
+
+  function carregarVideo(idx) {
+    player.src = VIDEOS[idx];
+    player.load();
+    player.play().catch(() => {
+      // Autoplay bloqueado — tenta mudo
+      player.muted = true;
+      player.play();
+    });
+  }
+
+  player.addEventListener('ended', () => {
+    videoAtual = (videoAtual + 1) % VIDEOS.length;
+    carregarVideo(videoAtual);
+  });
+
+  player.addEventListener('error', () => {
+    console.warn('[Video] Erro ao carregar vídeo', videoAtual, '— pulando...');
+    videoAtual = (videoAtual + 1) % VIDEOS.length;
+    setTimeout(() => carregarVideo(videoAtual), 2000);
+  });
+
+  // Inicia o primeiro vídeo
+  carregarVideo(0);
+  // ────────────────────────────────────────────────────────────────────────────
 
   // ── Inicialização ──
   SGA.iniciarRealtime();
