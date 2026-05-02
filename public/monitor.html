@@ -493,7 +493,7 @@
   function ativarSom() {
     // Ativa o áudio do vídeo
     player.muted = false;
-    player.volume = 1;
+    player.volume = 0.5;
     player.play().catch(() => {});
 
     // Inicializa AudioContext para os bipes
