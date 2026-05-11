@@ -57,33 +57,32 @@
 
   .setor-label {
     color: #FF6D2D;
-    font-size: 55px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 3px;
     text-transform: uppercase;
   }
 
   .call-box {
-    min-height: 600px;
     background: #ffffff;
     border: 3px solid #FF6D2D;
     border-radius: 20px;
     padding: 2.5rem 3.5rem;
     text-align: center;
     width: 100%;
-    max-width: 900px;
+    max-width: 520px;
     transition: border-color .3s;
     box-shadow: 0 6px 30px rgba(255,109,45,0.15);
   }
   .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(255,109,45,0.18); }
   .pref-label { font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #c87941; text-transform: uppercase; min-height: 22px; margin-bottom: 12px; }
-  .call-senha { font-size: 210px; font-weight: 700; color: #FF6D2D; line-height: 1; letter-spacing: 6px; }
+  .call-senha { font-size: 110px; font-weight: 700; color: #FF6D2D; line-height: 1; letter-spacing: 6px; }
   .call-box.pref .call-senha { color: #c87941; }
   .call-sep { width: 70px; height: 3px; background: #FF6D2D; margin: 16px auto; display: none; border-radius: 2px; }
   .call-box.pref .call-sep { background: #c87941; }
   .call-guiche { font-size: 32px; font-weight: 600; color: #FF6D2D; letter-spacing: 1px; }
   .call-box.pref .call-guiche { color: #c87941; }
-  .call-idle { font-size: 50px; color: #b0b8c8; font-weight: 300; }
+  .call-idle { font-size: 22px; color: #b0b8c8; font-weight: 300; }
 
   .hist-title { font-size: 11px; letter-spacing: 2px; color: #b05030; text-transform: uppercase; text-align: center; font-weight: 600; }
   .hist-list { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
@@ -351,53 +350,65 @@
   }
   tick(); setInterval(tick, 1000);
 
-  // ── Sistema de Som ──────────────────────────────────────────────────────────
+  // ── Sistema de Voz ───────────────────────────────────────────────────────────
   let audioCtx = null;
 
-  // Inicializa o AudioContext após interação do usuário (exigência dos navegadores)
+  // Inicializa AudioContext após interação do usuário
   function iniciarAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
   }
   document.addEventListener('click', iniciarAudio, { once: true });
   document.addEventListener('keydown', iniciarAudio, { once: true });
 
-  // Toca um bipe com frequência e duração configuráveis
-  function tocarBipe(frequencia, duracao, volume = 0.6) {
-    if (!audioCtx) {
-      // Tenta criar sem interação (funciona em alguns navegadores)
-      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-      catch(e) { return; }
-    }
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
-    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duracao);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + duracao);
+  // Fala a senha e o guichê usando Web Speech API
+  function falarChamada(num, nomeGuiche, preferencial) {
+    if (!window.speechSynthesis) return;
+
+    // Toca bipe antes de falar para chamar atenção
+    tocarBipe(880, 0.15, 0.7);
+    setTimeout(() => tocarBipe(880, 0.15, 0.7), 200);
+
+    // Aguarda o bipe terminar antes de falar
+    setTimeout(() => {
+      window.speechSynthesis.cancel();
+
+      // Monta texto — ex: "Senha zero um um, Guichê três"
+      const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
+      const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
+
+      function criarFala() {
+        const fala = new SpeechSynthesisUtterance(texto);
+        fala.lang   = 'pt-BR';
+        fala.rate   = 0.85;  // um pouco mais devagar para ficar claro
+        fala.pitch  = 1;
+        fala.volume = 1;
+        const vozes = window.speechSynthesis.getVoices();
+        const vozPT = vozes.find(v => v.lang === 'pt-BR') ||
+                      vozes.find(v => v.lang.startsWith('pt'));
+        if (vozPT) fala.voice = vozPT;
+        return fala;
+      }
+
+      // Fala a primeira vez
+      const fala1 = criarFala();
+      window.speechSynthesis.speak(fala1);
+
+      // Repete uma segunda vez após 1 segundo
+      fala1.onend = () => {
+        setTimeout(() => {
+          window.speechSynthesis.speak(criarFala());
+        }, 1000);
+      };
+    }, 500); // meio segundo após o bipe
   }
 
-  // Sequência de bipes para chamada normal: dois bipes médios
-  function tocarAlertaNormal() {
-    tocarBipe(880, 0.18, 1);                          // primeiro bipe
-    setTimeout(() => tocarBipe(880, 0.18, 1.5), 250);   // segundo bipe
-  }
-
-  // Sequência de bipes para preferencial: três bipes mais graves e longos
-  function tocarAlertaPreferencial() {
-    tocarBipe(660, 0.22, 0.6);                          // Mi5
-    setTimeout(() => tocarBipe(780, 0.22, 0.6), 280);   // Sol5#
-    setTimeout(() => tocarBipe(990, 0.28, 0.6), 560);   // Si5
-  }
-
-  function tocarAlerta(preferencial) {
-    if (preferencial) tocarAlertaPreferencial();
-    else tocarAlertaNormal();
+  // Carrega vozes (alguns navegadores carregam de forma assíncrona)
+  if (window.speechSynthesis) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
   }
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -407,7 +418,7 @@
   SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
 
   SGA.on('nova_chamada', c => {
-    tocarAlerta(c.preferencial);   // 🔊 toca o bipe
+    falarChamada(c.num, c.nomeGuiche, c.preferencial); // 🔊 fala a senha
     mostrarChamada(c, true);
     historico.unshift(c);
     if (historico.length > 4) historico.pop();
@@ -459,16 +470,7 @@
 
   // ── Player de Vídeos em Loop ──────────────────────────────────────────────
   const VIDEOS = [
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4', //Informativo
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890961/Video_02_dh7bvp.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890941/Video_03_muw4gr.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4', //Informativo
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890963/Video_04_lpjujh.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891163/Video_05_hat8z4.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4', //Informativo
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891150/Video_06_q5cqdy.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891201/Video_07_yjoybf.mp4',
-
+    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4',
   ];
 
   let videoAtual = 0;
@@ -503,16 +505,23 @@
   function ativarSom() {
     // Ativa o áudio do vídeo
     player.muted = false;
-    player.volume = 0.3;
+    player.volume = 1;
     player.play().catch(() => {});
 
-    // Inicializa AudioContext para os bipes
+    // Inicializa AudioContext
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Esconde o botão com animação
+    // Inicializa Speech Synthesis com uma fala silenciosa para desbloquear
+    if (window.speechSynthesis) {
+      const teste = new SpeechSynthesisUtterance(' ');
+      teste.volume = 0;
+      window.speechSynthesis.speak(teste);
+    }
+
+    // Esconde o botão
     const btn = document.getElementById('btn-som');
     btn.classList.add('sumindo');
     setTimeout(() => btn.style.display = 'none', 600);
