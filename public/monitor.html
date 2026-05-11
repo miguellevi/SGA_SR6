@@ -36,6 +36,7 @@
     display: grid;
     grid-template-columns: 1fr 3px 1fr;
     overflow: hidden;
+    min-height: 0;
   }
 
   /* ── Divisória ── */
@@ -53,6 +54,7 @@
     gap: 1.25rem;
     overflow: hidden;
     background: #f0f2f5;
+    min-height: 0;
   }
 
   .setor-label {
@@ -350,65 +352,77 @@
   }
   tick(); setInterval(tick, 1000);
 
-  // ── Sistema de Voz ───────────────────────────────────────────────────────────
+  // ── Sistema de Som e Voz ─────────────────────────────────────────────────────
   let audioCtx = null;
+  let somAtivado = false;
 
-  // Inicializa AudioContext após interação do usuário
   function iniciarAudio() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    // Pré-carrega vozes ao ativar
+    if (window.speechSynthesis) {
+      window.speechSynthesis.getVoices();
+      // Faz uma fala silenciosa para desbloquear o speechSynthesis
+      const unlock = new SpeechSynthesisUtterance(' ');
+      unlock.volume = 0;
+      window.speechSynthesis.speak(unlock);
+    }
+    somAtivado = true;
   }
   document.addEventListener('click', iniciarAudio, { once: true });
   document.addEventListener('keydown', iniciarAudio, { once: true });
 
-  // Fala a senha e o guichê usando Web Speech API
-  function falarChamada(num, nomeGuiche, preferencial) {
-    if (!window.speechSynthesis) return;
-
-    // Toca bipe antes de falar para chamar atenção
-    tocarBipe(880, 0.15, 0.7);
-    setTimeout(() => tocarBipe(880, 0.15, 0.7), 200);
-
-    // Aguarda o bipe terminar antes de falar
-    setTimeout(() => {
-      window.speechSynthesis.cancel();
-
-      // Monta texto — ex: "Senha zero um um, Guichê três"
-      const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
-      const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
-
-      function criarFala() {
-        const fala = new SpeechSynthesisUtterance(texto);
-        fala.lang   = 'pt-BR';
-        fala.rate   = 0.85;  // um pouco mais devagar para ficar claro
-        fala.pitch  = 1;
-        fala.volume = 1;
-        const vozes = window.speechSynthesis.getVoices();
-        const vozPT = vozes.find(v => v.lang === 'pt-BR') ||
-                      vozes.find(v => v.lang.startsWith('pt'));
-        if (vozPT) fala.voice = vozPT;
-        return fala;
-      }
-
-      // Fala a primeira vez
-      const fala1 = criarFala();
-      window.speechSynthesis.speak(fala1);
-
-      // Repete uma segunda vez após 1 segundo
-      fala1.onend = () => {
-        setTimeout(() => {
-          window.speechSynthesis.speak(criarFala());
-        }, 1000);
-      };
-    }, 500); // meio segundo após o bipe
+  // Carrega vozes antecipadamente
+  let vozPT = null;
+  function carregarVozes() {
+    const vozes = window.speechSynthesis.getVoices();
+    vozPT = vozes.find(v => v.lang === 'pt-BR') ||
+            vozes.find(v => v.lang.startsWith('pt')) ||
+            null;
+  }
+  if (window.speechSynthesis) {
+    carregarVozes();
+    window.speechSynthesis.onvoiceschanged = carregarVozes;
   }
 
-  // Carrega vozes (alguns navegadores carregam de forma assíncrona)
-  if (window.speechSynthesis) {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  function falarChamada(num, nomeGuiche, preferencial) {
+    // Bipe sempre toca
+    tocarBipe(880, 0.15, 0.8);
+    setTimeout(() => tocarBipe(1100, 0.15, 0.8), 220);
+
+    if (!window.speechSynthesis) return;
+
+    const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
+    const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
+
+    function falar() {
+      window.speechSynthesis.cancel();
+      const fala = new SpeechSynthesisUtterance(texto);
+      fala.lang   = 'pt-BR';
+      fala.rate   = 0.85;
+      fala.pitch  = 1;
+      fala.volume = 1;
+      if (vozPT) fala.voice = vozPT;
+
+      window.speechSynthesis.speak(fala);
+
+      // Repete após terminar
+      fala.onend = () => {
+        setTimeout(() => {
+          const fala2 = new SpeechSynthesisUtterance(texto);
+          fala2.lang   = 'pt-BR';
+          fala2.rate   = 0.85;
+          fala2.volume = 1;
+          if (vozPT) fala2.voice = vozPT;
+          window.speechSynthesis.speak(fala2);
+        }, 800);
+      };
+    }
+
+    // Aguarda bipes terminarem (600ms) antes de falar
+    setTimeout(falar, 600);
   }
   // ────────────────────────────────────────────────────────────────────────────
 
