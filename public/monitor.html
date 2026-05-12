@@ -420,22 +420,11 @@ function tocarBipe(frequencia, duracao, volume) {
    
     // 3. Fala após os bipes (900ms)
     setTimeout(() => {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-
-  const texto = "Senha 1. Guichê 1.";
-  const fala = new SpeechSynthesisUtterance(texto);
-  
-  // Forçar o idioma sem forçar o objeto de voz (deixa a TV escolher o melhor)
-  fala.lang = 'pt-BR'; 
-  fala.volume = 1;
-  fala.rate = 1;
-
-  // LOG de erro para você ver se a TV avisa algo (se puder plugar um teclado/mouse)
-  fala.onerror = (e) => console.error("Erro na voz da TV:", e);
-
-  window.speechSynthesis.speak(fala);
-}, 700);
+      if (!window.speechSynthesis) {
+        // Se não tiver speechSynthesis, retoma vídeo e sai
+        if (videoEl) { videoEl.muted = false; videoEl.play().catch(()=>{}); }
+        return;
+      }
 
       window.speechSynthesis.cancel();
 
@@ -468,7 +457,7 @@ function tocarBipe(frequencia, duracao, volume) {
           window.speechSynthesis.speak(fala2);
         }, 1000);
       });
-
+ 
       window.speechSynthesis.speak(fala1);
 
       // Segurança: se a voz travar por mais de 15s, retoma o vídeo
@@ -603,12 +592,22 @@ function tocarBipe(frequencia, duracao, volume) {
 
   // Esconde automaticamente após 15 segundos se não clicar
   setTimeout(() => {
-    const btn = document.getElementById('btn-som');
-    if (btn && !btn.classList.contains('sumindo')) {
-      btn.classList.add('sumindo');
-      setTimeout(() => btn.style.display = 'none', 600);
-    }
-  }, 15000);
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+
+  const texto = "Senha 1. Guichê 1.";
+  const fala = new SpeechSynthesisUtterance(texto);
+  
+  // Forçar o idioma sem forçar o objeto de voz (deixa a TV escolher o melhor)
+  fala.lang = 'pt-BR'; 
+  fala.volume = 1;
+  fala.rate = 1;
+
+  // LOG de erro para você ver se a TV avisa algo (se puder plugar um teclado/mouse)
+  fala.onerror = (e) => console.error("Erro na voz da TV:", e);
+
+  window.speechSynthesis.speak(fala);
+}, 700);
   // ────────────────────────────────────────────────────────────────────────────
 
   // ── Inicialização ──
