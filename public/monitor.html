@@ -360,26 +360,39 @@ let somAtivado = false;
 
 // Função principal para tocar a sequência de áudios
 function tocarSequencia(listaDeAudios, videoEl) {
+    // 1. Verifica se a lista terminou para retomar o vídeo
+    if (listaDeAudios.length === 0) {
+        setTimeout(() => {
+            if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {
+                    videoEl.muted = true;
+                    videoEl.play();
+                });
+            }
+        }, 500);
+        return; // Sai da função pois não há mais áudios
+    }
+
+    // 2. Continua a reprodução se ainda houver itens na lista
     const proximoAudio = listaDeAudios.shift();
     const caminhoAudio = `/sons/${proximoAudio}.mp3`;
     const som = new Audio(caminhoAudio);
 
-    // --- ALTERAÇÃO DE VELOCIDADE AQUI ---
-    // 1.0 (normal), 1.2 (20% mais rápido), 1.5 (muito rápido)
+    // Ajuste de velocidade (1.2 = 20% mais rápido)
     som.playbackRate = 1.2; 
-    // ------------------------------------
-
     som.volume = 1;
 
     som.play().catch(e => {
         console.warn(`Erro ao tocar: ${caminhoAudio}`, e);
+        // Se falhar um áudio, pula para o próximo imediatamente
         tocarSequencia(listaDeAudios, videoEl);
     });
 
     som.onended = () => {
         tocarSequencia(listaDeAudios, videoEl);
     };
-    }
+}
 
     // Pega o próximo arquivo da lista (ex: "senha", "1", "guiche")
     const proximoAudio = listaDeAudios.shift();
