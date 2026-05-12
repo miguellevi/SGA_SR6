@@ -399,40 +399,38 @@ function falarChamada(num, nomeGuiche, preferencial) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Montamos a lista de strings puras para não haver confusão de tipos
-    let playlist = [];
+    // 1. Iniciamos a lista vazia e adicionamos o básico
+    let playlist = ['bipe'];
     
-    playlist.push('bipe');
-
     if (preferencial === true || preferencial === "true") {
         playlist.push('preferencial');
     }
-
+    
     playlist.push('senha');
 
-    // --- TRATAMENTO DA SENHA (Ex: 013) ---
-    // Transformamos em texto, removemos tudo que não é letra/número e fatiamos
-    const strSenha = String(num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    const digitosSenha = strSenha.split(''); 
+    // 2. TRATAMENTO DA SENHA (Ex: 015)
+    // Forçamos a senha a ser uma string limpa
+    const s = String(num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
     
-    digitosSenha.forEach(char => {
-        if (char.trim() !== "") playlist.push(char);
-    });
+    // Adicionamos dígito por dígito manualmente
+    for (let i = 0; i < s.length; i++) {
+        playlist.push(s[i]);
+    }
 
-    // --- DIVISOR FIXO ---
+    // 3. O DIVISOR (Apenas uma vez)
     playlist.push('guiche');
 
-    // --- TRATAMENTO DO GUICHÊ (Ex: Guichê 5) ---
-    // Pegamos APENAS o último caractere se for um número, 
-    // ou apenas os dígitos para evitar o erro do "guichê 3 guichê 5"
-    const strGuiche = String(nomeGuiche).replace(/\D/g, ''); 
-    const digitosGuiche = strGuiche.split('');
+    // 4. TRATAMENTO DO GUICHÊ (Ex: Guichê 5)
+    // Aqui está o segredo: ignoramos as letras e pegamos APENAS os números
+    const g = String(nomeGuiche).replace(/\D/g, ''); 
+    
+    for (let j = 0; j < g.length; j++) {
+        playlist.push(g[j]);
+    }
 
-    digitosGuiche.forEach(digito => {
-        if (digito.trim() !== "") playlist.push(digito);
-    });
+    // DEBUG: Verifique no console do navegador se a lista está correta
+    console.log("FILA DE ÁUDIO:", playlist);
 
-    console.log("PLAYLIST FINAL BLOQUEADA:", playlist);
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
