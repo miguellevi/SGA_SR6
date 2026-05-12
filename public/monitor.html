@@ -399,43 +399,40 @@ function falarChamada(num, nomeGuiche, preferencial) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Criamos a playlist manualmente para evitar repetições do sistema
+    // Montamos a lista de strings puras para não haver confusão de tipos
     let playlist = [];
     
     playlist.push('bipe');
 
-    if (preferencial) {
+    if (preferencial === true || preferencial === "true") {
         playlist.push('preferencial');
     }
 
     playlist.push('senha');
 
-    // 1. Tratamento da Senha (Ex: 011)
-    // Forçamos ser uma string e removemos qualquer letra "P" ou espaços
-    const senhaApenasNumeros = String(num).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // --- TRATAMENTO DA SENHA (Ex: 013) ---
+    // Transformamos em texto, removemos tudo que não é letra/número e fatiamos
+    const strSenha = String(num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const digitosSenha = strSenha.split(''); 
     
-    // Transformamos a string em um array de caracteres únicos
-    const digitosSenha = senhaApenasNumeros.split('');
-    digitosSenha.forEach(d => {
-        if(d.trim() !== "") playlist.push(d.toLowerCase());
+    digitosSenha.forEach(char => {
+        if (char.trim() !== "") playlist.push(char);
     });
 
+    // --- DIVISOR FIXO ---
     playlist.push('guiche');
 
-    // 2. Tratamento do Guichê (Ex: Guichê 5)
-    // Pegamos APENAS o número final, ignorando qualquer texto
-    const numeroApenasGuiche = String(nomeGuiche).replace(/\D/g, '');
-    
-    if (numeroApenasGuiche) {
-        const digitosGuiche = numeroApenasGuiche.split('');
-        digitosGuiche.forEach(d => {
-            playlist.push(d);
-        });
-    }
+    // --- TRATAMENTO DO GUICHÊ (Ex: Guichê 5) ---
+    // Pegamos APENAS o último caractere se for um número, 
+    // ou apenas os dígitos para evitar o erro do "guichê 3 guichê 5"
+    const strGuiche = String(nomeGuiche).replace(/\D/g, ''); 
+    const digitosGuiche = strGuiche.split('');
 
-    // DEBUG: Isso aparecerá no console do seu PC se você testar lá
-    console.log("Playlist final sem repetições:", playlist);
+    digitosGuiche.forEach(digito => {
+        if (digito.trim() !== "") playlist.push(digito);
+    });
 
+    console.log("PLAYLIST FINAL BLOQUEADA:", playlist);
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
