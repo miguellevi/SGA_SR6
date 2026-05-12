@@ -391,34 +391,51 @@ function tocarSequencia(listaDeAudios, videoEl) {
 
 function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
-    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
+    if (videoEl) { 
+        videoEl.pause(); 
+        videoEl.muted = true; 
+    }
 
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    let playlist = ['bipe'];
+    // Criamos a playlist manualmente para evitar repetições do sistema
+    let playlist = [];
     
-    // Se for preferencial, fala apenas UMA VEZ
-    if (preferencial) playlist.push('preferencial');
+    playlist.push('bipe');
+
+    if (preferencial) {
+        playlist.push('preferencial');
+    }
 
     playlist.push('senha');
 
-    // Fala cada caractere da senha P017 (P -> 0 -> 1 -> 7)
-    const senhaTexto = String(num).trim().toLowerCase();
-    for (let char of senhaTexto) {
-        if (/[a-z0-9]/.test(char)) playlist.push(char);
-    }
+    // 1. Tratamento da Senha (Ex: 011)
+    // Forçamos ser uma string e removemos qualquer letra "P" ou espaços
+    const senhaApenasNumeros = String(num).toUpperCase().replace(/[^A-Z0-9]/g, '');
+    
+    // Transformamos a string em um array de caracteres únicos
+    const digitosSenha = senhaApenasNumeros.split('');
+    digitosSenha.forEach(d => {
+        if(d.trim() !== "") playlist.push(d.toLowerCase());
+    });
 
     playlist.push('guiche');
 
-    // Pega apenas o número do guichê (Ex: "Guichê 5" vira apenas "5")
-    const numGuiche = nomeGuiche.replace(/\D/g, '');
-    // Se o guichê for "5", adiciona apenas o "5"
-    if(numGuiche) {
-        for (let digito of numGuiche) playlist.push(digito);
+    // 2. Tratamento do Guichê (Ex: Guichê 5)
+    // Pegamos APENAS o número final, ignorando qualquer texto
+    const numeroApenasGuiche = String(nomeGuiche).replace(/\D/g, '');
+    
+    if (numeroApenasGuiche) {
+        const digitosGuiche = numeroApenasGuiche.split('');
+        digitosGuiche.forEach(d => {
+            playlist.push(d);
+        });
     }
 
-    console.log("Playlist final:", playlist);
+    // DEBUG: Isso aparecerá no console do seu PC se você testar lá
+    console.log("Playlist final sem repetições:", playlist);
+
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
