@@ -441,15 +441,19 @@ function retomarVideo(video) {
   SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
 
 SGA.on('chamada', (dados) => {
-    // Atualiza a tela (isso você já tem)
-    // ... código que muda o número na tela ...
-
-    // CHAMA A FUNÇÃO CERTA BASEADO NO TIPO
-    if (dados.preferencial === true || dados.preferencial === "true" || dados.preferencial === 1) {
-        falarChamadaPreferencial(dados.numero, dados.guiche);
-    } else {
-        falarChamadaNormal(dados.numero, dados.guiche);
+    // 1. ATUALIZA A TELA (Importante para sair do "Aguardando")
+    // Verifique se os IDs abaixo (numero-senha e guiche-numero) 
+    // são os mesmos que você usa no seu HTML
+    if (document.getElementById('numero-senha')) {
+        document.getElementById('numero-senha').innerText = dados.numero;
     }
+    if (document.getElementById('guiche-numero')) {
+        document.getElementById('guiche-numero').innerText = dados.guiche;
+    }
+
+    // 2. CHAMA A FUNÇÃO DE ÁUDIO UNIFICADA
+    // Usamos apenas 'falarChamada' para evitar o erro de "not defined"
+    falarChamada(dados.numero, dados.guiche, dados.preferencial);
 });
 
   SGA.on('guiches_atualizados', () => {
