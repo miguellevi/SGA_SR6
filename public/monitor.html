@@ -354,100 +354,89 @@
   tick(); setInterval(tick, 1000);
 
   // ── Sistema de Som e Voz ─────────────────────────────────────────────────────
-  let audioCtx = null;
-  let somAtivado = false;
+// ── Sistema de Áudio Modular (MP3) ──────────────────────────────────────────
+let audioCtx = null;
+let somAtivado = false;
 
-  function iniciarAudio() {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// Função principal para tocar a sequência de áudios
+function tocarSequencia(listaDeAudios, videoEl) {
+    if (listaDeAudios.length === 0) {
+        // Finalizou a sequência: aguarda um pouco e retoma o vídeo com som
+        setTimeout(() => {
+            if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {
+                    // Fallback para navegadores que bloqueiam play com som
+                    videoEl.muted = true;
+                    videoEl.play();
+                });
+            }
+        }, 500);
+        return;
     }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    // Pré-carrega vozes ao ativar
-    if (window.speechSynthesis) {
-      window.speechSynthesis.getVoices();
-      // Faz uma fala silenciosa para desbloquear o speechSynthesis
-      const unlock = new SpeechSynthesisUtterance(' ');
-      unlock.volume = 0;
-      window.speechSynthesis.speak(unlock);
-    }
-    somAtivado = true;
-  }
-  document.addEventListener('click', iniciarAudio, { once: true });
-  document.addEventListener('keydown', iniciarAudio, { once: true });
 
-  // Carrega vozes antecipadamente
-  let vozPT = null;
-  function carregarVozes() {
-    const vozes = window.speechSynthesis.getVoices();
-    vozPT = vozes.find(v => v.lang === 'pt-BR') ||
-            vozes.find(v => v.lang.startsWith('pt')) ||
-            null;
-  }
-  if (window.speechSynthesis) {
-    carregarVozes();
-    window.speechSynthesis.onvoiceschanged = carregarVozes;
-  }
+    // Pega o próximo arquivo da lista (ex: "senha", "1", "guiche")
+    const proximoAudio = listaDeAudios.shift();
+    const caminhoAudio = `/sons/${proximoAudio}.mp3`;
+    const som = new Audio(caminhoAudio);
 
- // Gerador de bipe via software (Web Audio API)
-function tocarBipe(frequencia, duracao, volume) {
-  if (!audioCtx) return;
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
+    // Ajuste de volume
+    som.volume = 1;
 
-  oscillator.type = 'sine';
-  oscillator.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
-  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+    som.play().catch(e => {
+        console.warn(`Erro ao tocar: ${caminhoAudio}. Pulando...`, e);
+        tocarSequencia(listaDeAudios, videoEl);
+    });
 
-  oscillator.start();
-  oscillator.stop(audioCtx.currentTime + duracao);
+    // Quando o áudio atual terminar, chama a função novamente para o próximo
+    som.onended = () => {
+        tocarSequencia(listaDeAudios, videoEl);
+    };
 }
+
 function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
     
-    // 1. Pausa o vídeo e tira o som da mídia
+    // 1. Pausa o vídeo
     if (videoEl) {
         videoEl.pause();
         videoEl.muted = true;
     }
 
-    // 2. Toca os bipes (Sinalização sonora)
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    tocarBipe(880, 0.2, 0.5);
-    setTimeout(() => tocarBipe(1100, 0.2, 0.5), 300);
+    // 2. Garante que o contexto de áudio foi iniciado (necessário para algumas TVs)
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // 3. Inicia a lógica da voz após os bipes
-    setTimeout(() => {
-        if (!window.speechSynthesis) {
-            // Se a TV não suportar voz, retoma o vídeo imediatamente
-            retomarVideo(videoEl);
-            return;
-        }
+    // 3. Monta a lista de reprodução (Playlist)
+    // Os nomes devem ser idênticos aos arquivos na pasta public/sons/
+    let playlist = ['bipe']; // Começa com o bipe de alerta
 
-        window.speechSynthesis.cancel(); // Limpa chamadas presas
+    if (preferencial) {
+        playlist.push('preferencial');
+    }
 
-        const texto = `${preferencial ? 'Atendimento preferencial.' : ''} Senha ${num}. ${nomeGuiche}.`;
-        const fala = new SpeechSynthesisUtterance(texto);
-        fala.lang = 'pt-BR';
-        fala.volume = 1;
-        fala.rate = 0.8; // Um pouco mais lento para clareza na TV
+    playlist.push('senha');
 
-        // EVENTO: Quando a voz terminar, retoma o vídeo
-        fala.onend = () => retomarVideo(videoEl);
+    // Transforma a senha em dígitos individuais (Ex: "01" -> "0", "1")
+    const digitosSenha = num.toString().split('');
+    playlist = playlist.concat(digitosSenha);
 
-        // EVENTO: Se der erro na voz, retoma o vídeo para não travar o painel
-        fala.onerror = () => retomarVideo(videoEl);
+    playlist.push('guiche'); // Note: sem acento para bater com o arquivo renomeado
 
-        window.speechSynthesis.speak(fala);
+    // Pega apenas os números do nome do guichê (Ex: "Guichê 02" -> "0", "2")
+    const digitosGuiche = nomeGuiche.replace(/\D/g, '').split('');
+    playlist = playlist.concat(digitosGuiche);
 
-        // SEGURANÇA: Se por algum motivo a TV "esquecer" de avisar que terminou,
-        // força a retomada do vídeo após 10 segundos.
-        setTimeout(() => retomarVideo(videoEl), 10000);
-
-    }, 800);
+    // 4. Inicia a sequência de áudio
+    console.log("Iniciando playlist:", playlist);
+    tocarSequencia(playlist, videoEl);
 }
+// ────────────────────────────────────────────────────────────────────────────
+
+
+
+
+ 
 
 // Função auxiliar para garantir que o vídeo volte a tocar
 function retomarVideo(video) {
