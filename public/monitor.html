@@ -396,39 +396,36 @@ function tocarSequencia(listaDeAudios, videoEl) {
 
 function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
-    
-    // 1. Pausa o vídeo
-    if (videoEl) {
-        videoEl.pause();
-        videoEl.muted = true;
+    if (videoEl) { 
+        videoEl.pause(); 
+        videoEl.muted = true; 
     }
 
-    // 2. Garante que o contexto de áudio foi iniciado (necessário para algumas TVs)
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // 3. Monta a lista de reprodução (Playlist)
-    // Os nomes devem ser idênticos aos arquivos na pasta public/sons/
-    let playlist = ['bipe']; // Começa com o bipe de alerta
-
-    if (preferencial) {
-        playlist.push('preferencial');
-    }
-
+    let playlist = ['bipe'];
+    if (preferencial) playlist.push('preferencial');
     playlist.push('senha');
 
-    // Transforma a senha em dígitos individuais (Ex: "01" -> "0", "1")
-    const digitosSenha = num.toString().split('');
-    playlist = playlist.concat(digitosSenha);
+    // --- MELHORIA AQUI: Trata letras e números da senha ---
+    // Converte para string, remove espaços e transforma tudo em minúsculo
+    const caracteresSenha = num.toString().trim().toLowerCase().split('');
+    
+    caracteresSenha.forEach(caractere => {
+        // Se for um espaço ou caractere especial, não adiciona à playlist
+        if (caractere !== ' ') {
+            playlist.push(caractere);
+        }
+    });
 
-    playlist.push('guiche'); // Note: sem acento para bater com o arquivo renomeado
+    playlist.push('guiche');
 
-    // Pega apenas os números do nome do guichê (Ex: "Guichê 02" -> "0", "2")
+    // Pega apenas os dígitos do guichê (Ex: "Guichê 5" -> "5")
     const digitosGuiche = nomeGuiche.replace(/\D/g, '').split('');
-    playlist = playlist.concat(digitosGuiche);
+    digitosGuiche.forEach(d => playlist.push(d));
 
-    // 4. Inicia a sequência de áudio
-    console.log("Iniciando playlist:", playlist);
+    console.log("Playlist gerada:", playlist);
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
