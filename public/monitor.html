@@ -404,70 +404,30 @@ function tocarBipe(frequencia, duracao, volume) {
   oscillator.start();
   oscillator.stop(audioCtx.currentTime + duracao);
 }
-  function falarChamada(num, nomeGuiche, preferencial) {
-    const videoEl = document.getElementById('player');
+function falarChamada(num, nomeGuiche, preferencial) {
+    // ... manter o código dos bipes ...
 
-    // 1. Pausa e muta o vídeo
-    if (videoEl) {
-      videoEl.pause();
-      videoEl.muted = true;
-    }
+    const texto = `Senha ${num}. ${nomeGuiche}`;
+    const ut = new SpeechSynthesisUtterance(texto);
+    ut.lang = 'pt-BR';
 
-    // 2. Toca 3 bipes fortes
-    tocarBipe(880, 0.25, 1.0);
-    setTimeout(() => tocarBipe(1100, 0.25, 1.0), 300);
-    setTimeout(() => tocarBipe(880, 0.25, 1.0), 600);
-   
-    // 3. Fala após os bipes (900ms)
+    // Algumas TVs só falam se o volume for definido explicitamente de novo
+    ut.volume = 1;
+    ut.rate = 1;
+
+    // Tenta falar. Se falhar silenciosamente, o 'onerror' pode avisar
+    window.speechSynthesis.speak(ut);
+
+    // DEBUG para TV: Se não falar em 2 segundos, tenta de novo sem a voz PT
     setTimeout(() => {
-      if (!window.speechSynthesis) {
-        // Se não tiver speechSynthesis, retoma vídeo e sai
-        if (videoEl) { videoEl.muted = false; videoEl.play().catch(()=>{}); }
-        return;
-      }
-
-      window.speechSynthesis.cancel();
-
-      const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
-      const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
-
-      function fazerFala(onFim) {
-        const fala = new SpeechSynthesisUtterance(texto);
-        fala.lang   = 'pt-BR';
-        fala.rate   = 1;  // bem devagar e claro
-        fala.pitch  = 1;
-        fala.volume = 1;
-        if (vozPT) fala.voice = vozPT;
-        if (onFim) fala.onend = onFim;
-        return fala;
-      }
-
-      // Fala 1ª vez → pausa 1s → fala 2ª vez → retoma vídeo
-      const fala1 = fazerFala(() => {
-        setTimeout(() => {
-          const fala2 = fazerFala(() => {
-            // Retoma vídeo após terminar tudo
-            setTimeout(() => {
-              if (videoEl) {
-                videoEl.muted = false;
-                videoEl.play().catch(() => {});
-              }
-            }, 500);
-          });
-          window.speechSynthesis.speak(fala2);
-        }, 1000);
-      });
- 
-      window.speechSynthesis.speak(fala1);
-
-      // Segurança: se a voz travar por mais de 15s, retoma o vídeo
-      setTimeout(() => {
-        window.speechSynthesis.cancel();
-        if (videoEl) { videoEl.muted = false; videoEl.play().catch(() => {}); }
-      }, 15000);
-
-    }, 900);
-  }
+        if (!window.speechSynthesis.speaking) {
+            console.log("Tentando fallback sem definir voz...");
+            window.speechSynthesis.cancel();
+            const fallback = new SpeechSynthesisUtterance(texto);
+            window.speechSynthesis.speak(fallback);
+        }
+    }, 2000);
+}
   // ────────────────────────────────────────────────────────────────────────────
 
   // ── SGA Realtime ──
