@@ -389,44 +389,53 @@ function tocarSequencia(listaDeAudios, videoEl) {
     };
 }
 
-function falarChamada(num, nomeGuiche, preferencial) {
+// 1. FUNÇÃO PARA SENHA NORMAL (EX: 018)
+function falarChamadaNormal(num, nomeGuiche) {
     const videoEl = document.getElementById('player');
-    if (videoEl) { 
-        videoEl.pause(); 
-        videoEl.muted = true; 
+    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
+
+    let playlist = ['bipe', 'senha'];
+
+    // Forçamos a senha a ser lida caractere por caractere (0, 1, 8)
+    const s = String(num).replace(/\D/g, ''); 
+    for (let i = 0; i < s.length; i++) {
+        playlist.push(s[i]);
     }
 
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    playlist.push('guiche');
 
-    // 1. Criamos partes separadas para garantir que não misturem
-    let parteSenha = [];
-    let parteGuiche = [];
-    
-    // Configuração da Senha
-    if (preferencial === true || preferencial === "true" || preferencial === 1) {
-        parteSenha.push('preferencial');
+    // Pegamos apenas o número do guichê (5)
+    const g = String(nomeGuiche).replace(/\D/g, '');
+    for (let j = 0; j < g.length; j++) {
+        playlist.push(g[j]);
     }
-    parteSenha.push('senha');
 
-    // Processa a Senha (Ex: 016)
-    const s = String(num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    console.log("Playlist Normal:", playlist);
+    tocarSequencia(playlist, videoEl);
+}
+
+// 2. FUNÇÃO PARA SENHA PREFERENCIAL (EX: P018)
+function falarChamadaPreferencial(num, nomeGuiche) {
+    const videoEl = document.getElementById('player');
+    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
+
+    let playlist = ['bipe', 'preferencial', 'senha'];
+
+    // Para preferencial, mantemos a leitura de letras (P) e números
+    const s = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
     for (let char of s) {
-        if (char.trim() !== "") parteSenha.push(char);
+        playlist.push(char);
     }
 
-    // Configuração do Guichê (Ex: 5)
-    parteGuiche.push('guiche');
-    const g = String(nomeGuiche).replace(/\D/g, ''); // Pega APENAS o número 5
-    for (let numG of g) {
-        if (numG.trim() !== "") parteGuiche.push(numG);
+    playlist.push('guiche');
+
+    const g = String(nomeGuiche).replace(/\D/g, '');
+    for (let digito of g) {
+        playlist.push(digito);
     }
 
-    // 2. JUNÇÃO FINAL: Aqui garantimos a ordem exata
-    const playlistFinal = ['bipe', ...parteSenha, ...parteGuiche];
-
-    console.log("Ordem de fala confirmada:", playlistFinal);
-    tocarSequencia(playlistFinal, videoEl);
+    console.log("Playlist Preferencial:", playlist);
+    tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
