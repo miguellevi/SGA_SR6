@@ -389,53 +389,81 @@ function tocarSequencia(listaDeAudios, videoEl) {
     };
 }
 
-// 1. FUNÇÃO PARA SENHA NORMAL (EX: 018)
-function falarChamadaNormal(num, nomeGuiche) {
+// Função que a sua tela chama quando chega uma senha nova
+function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
-    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
-
-    let playlist = ['bipe', 'senha'];
-
-    // Forçamos a senha a ser lida caractere por caractere (0, 1, 8)
-    const s = String(num).replace(/\D/g, ''); 
-    for (let i = 0; i < s.length; i++) {
-        playlist.push(s[i]);
+    if (videoEl) { 
+        videoEl.pause(); 
+        videoEl.muted = true; 
     }
 
-    playlist.push('guiche');
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Pegamos apenas o número do guichê (5)
-    const g = String(nomeGuiche).replace(/\D/g, '');
-    for (let j = 0; j < g.length; j++) {
-        playlist.push(g[j]);
+    let playlist = ['bipe'];
+    
+    // Identifica se é preferencial (aceita booleano, string ou número 1)
+    const ehPreferencial = (preferencial === true || preferencial === "true" || preferencial === 1);
+
+    if (ehPreferencial) {
+        playlist.push('preferencial');
+    }
+    
+    playlist.push('senha');
+
+    // TRATAMENTO DA SENHA:
+    // Se for preferencial, mantemos letras e números. Se for normal, apenas números.
+    let senhaLimpa;
+    if (ehPreferencial) {
+        senhaLimpa = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+        senhaLimpa = String(num).replace(/\D/g, ''); // Remove qualquer "P" ou símbolo fantasma da senha normal
     }
 
-    console.log("Playlist Normal:", playlist);
-    tocarSequencia(playlist, videoEl);
-}
-
-// 2. FUNÇÃO PARA SENHA PREFERENCIAL (EX: P018)
-function falarChamadaPreferencial(num, nomeGuiche) {
-    const videoEl = document.getElementById('player');
-    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
-
-    let playlist = ['bipe', 'preferencial', 'senha'];
-
-    // Para preferencial, mantemos a leitura de letras (P) e números
-    const s = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (let char of s) {
+    for (let char of senhaLimpa) {
         playlist.push(char);
     }
 
     playlist.push('guiche');
 
-    const g = String(nomeGuiche).replace(/\D/g, '');
-    for (let digito of g) {
+    // TRATAMENTO DO GUICHÊ:
+    // Pega apenas o número (ex: "5")
+    const apenasNumerosGuiche = String(nomeGuiche).replace(/\D/g, ''); 
+    for (let digito of apenasNumerosGuiche) {
         playlist.push(digito);
     }
 
-    console.log("Playlist Preferencial:", playlist);
-    tocarSequencia(playlist, videoEl);
+    // Limpeza de segurança
+    const playlistFinal = playlist.filter(item => item && item.trim() !== "");
+
+    console.log("Playlist Gerada:", playlistFinal);
+    tocarSequencia(playlistFinal, videoEl);
+}
+
+// Função de execução (mantenha como está, ela está funcionando bem para o vídeo)
+function tocarSequencia(listaDeAudios, videoEl) {
+    if (listaDeAudios.length === 0) {
+        setTimeout(() => {
+            if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => { videoEl.muted = true; videoEl.play(); });
+            }
+        }, 300);
+        return;
+    }
+
+    const proximo = listaDeAudios.shift();
+    const som = new Audio(`/sons/${proximo}.mp3`);
+    som.playbackRate = 1.3;
+    som.volume = 1;
+
+    som.play().catch(() => tocarSequencia(listaDeAudios, videoEl));
+
+    som.onended = () => {
+        som.src = ""; 
+        som.load();
+        tocarSequencia(listaDeAudios, videoEl);
+    };
 }
 // ────────────────────────────────────────────────────────────────────────────
 
