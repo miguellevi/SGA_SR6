@@ -386,12 +386,6 @@
     carregarVozes();
     window.speechSynthesis.onvoiceschanged = carregarVozes;
   }
-
-  // 2. Toca 3 bipes fortes
-    tocarBipe(880, 0.25, 1.0);
-    setTimeout(() => tocarBipe(1100, 0.25, 1.0), 300);
-    setTimeout(() => tocarBipe(880, 0.25, 1.0), 600);
-
   function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
 
@@ -400,6 +394,12 @@
       videoEl.pause();
       videoEl.muted = true;
     }
+
+    // 2. Toca 3 bipes fortes
+    tocarBipe(880, 0.25, 1.0);
+    setTimeout(() => tocarBipe(1100, 0.25, 1.0), 300);
+    setTimeout(() => tocarBipe(880, 0.25, 1.0), 600);
+   
     // 3. Fala após os bipes (900ms)
     setTimeout(() => {
       if (!window.speechSynthesis) {
