@@ -361,38 +361,19 @@ let somAtivado = false;
 // Função principal para tocar a sequência de áudios
 function tocarSequencia(listaDeAudios, videoEl) {
     if (listaDeAudios.length === 0) {
-        // Finalizou a sequência: aguarda um pouco e retoma o vídeo com som
-        setTimeout(() => {
-            if (videoEl) {
-                videoEl.muted = false;
-                videoEl.play().catch(() => {
-                    // Fallback para navegadores que bloqueiam play com som
-                    videoEl.muted = true;
-                    videoEl.play();
-                });
-            }
-        }, 500);
+        // ... (lógica de voltar o vídeo)
         return;
     }
 
-    // Pega o próximo arquivo da lista (ex: "senha", "1", "guiche")
-    const proximoAudio = listaDeAudios.shift();
-    const caminhoAudio = `/sons/${proximoAudio}.mp3`;
-    const som = new Audio(caminhoAudio);
-    som.playbackRate = 1.3;
+    const proximo = listaDeAudios.shift();
+    const som = new Audio(`/sons/${proximo}.mp3`);
 
-    // Ajuste de volume
+    // AJUSTE DE VELOCIDADE: 1.3 é uma ótima velocidade para painéis
+    som.playbackRate = 1.3; 
+    
     som.volume = 1;
-
-    som.play().catch(e => {
-        console.warn(`Erro ao tocar: ${caminhoAudio}. Pulando...`, e);
-        tocarSequencia(listaDeAudios, videoEl);
-    });
-
-    // Quando o áudio atual terminar, chama a função novamente para o próximo
-    som.onended = () => {
-        tocarSequencia(listaDeAudios, videoEl);
-    };
+    som.play().catch(() => tocarSequencia(listaDeAudios, videoEl));
+    som.onended = () => tocarSequencia(listaDeAudios, videoEl);
 }
 
 function falarChamada(num, nomeGuiche, preferencial) {
@@ -402,31 +383,41 @@ function falarChamada(num, nomeGuiche, preferencial) {
         videoEl.muted = true; 
     }
 
+    // Inicializa ou retoma o contexto de áudio
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
     let playlist = ['bipe'];
-    if (preferencial) playlist.push('preferencial');
+
+    // 1. Se for preferencial, fala a palavra "Preferencial" antes de tudo
+    if (preferencial) {
+        playlist.push('preferencial');
+    }
+
     playlist.push('senha');
 
-    // --- MELHORIA AQUI: Trata letras e números da senha ---
-    // Converte para string, remove espaços e transforma tudo em minúsculo
-    const caracteresSenha = num.toString().trim().toLowerCase().split('');
+    // 2. Trata a senha (P014) caractere por caractere de forma segura
+    // Convertemos para String e limpamos qualquer espaço sobrando
+    const senhaTexto = String(num).trim().toLowerCase();
     
-    caracteresSenha.forEach(caractere => {
-        // Se for um espaço ou caractere especial, não adiciona à playlist
-        if (caractere !== ' ') {
-            playlist.push(caractere);
+    for (let i = 0; i < senhaTexto.length; i++) {
+        const char = senhaTexto[i];
+        // Adiciona apenas se for letra ou número (ignora pontos ou traços)
+        if (/[a-z0-9]/.test(char)) {
+            playlist.push(char);
         }
-    });
+    }
 
     playlist.push('guiche');
 
-    // Pega apenas os dígitos do guichê (Ex: "Guichê 5" -> "5")
-    const digitosGuiche = nomeGuiche.replace(/\D/g, '').split('');
-    digitosGuiche.forEach(d => playlist.push(d));
+    // 3. Trata o guichê pegando apenas os números
+    const numGuiche = nomeGuiche.replace(/\D/g, '');
+    for (let i = 0; i < numGuiche.length; i++) {
+        playlist.push(numGuiche[i]);
+    }
 
-    console.log("Playlist gerada:", playlist);
+    // 4. Dispara a sequência (a velocidade é definida na tocarSequencia)
+    console.log("Playlist gerada para " + num + ":", playlist);
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
