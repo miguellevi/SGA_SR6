@@ -361,63 +361,64 @@ let somAtivado = false;
 // Função principal para tocar a sequência de áudios
 function tocarSequencia(listaDeAudios, videoEl) {
     if (listaDeAudios.length === 0) {
-        // ... (lógica de voltar o vídeo)
+        // Pequena pausa para garantir que o último áudio fechou
+        setTimeout(() => {
+            if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {
+                    videoEl.muted = true;
+                    videoEl.play();
+                });
+            }
+        }, 300);
         return;
     }
 
     const proximo = listaDeAudios.shift();
     const som = new Audio(`/sons/${proximo}.mp3`);
-
-    // AJUSTE DE VELOCIDADE: 1.3 é uma ótima velocidade para painéis
-    som.playbackRate = 1.3; 
-    
+    som.playbackRate = 1.3;
     som.volume = 1;
+
     som.play().catch(() => tocarSequencia(listaDeAudios, videoEl));
-    som.onended = () => tocarSequencia(listaDeAudios, videoEl);
+
+    som.onended = () => {
+        // Limpa o arquivo da memória para não travar a TV
+        som.src = ""; 
+        som.load();
+        tocarSequencia(listaDeAudios, videoEl);
+    };
 }
 
 function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
-    if (videoEl) { 
-        videoEl.pause(); 
-        videoEl.muted = true; 
-    }
+    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
 
-    // Inicializa ou retoma o contexto de áudio
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
     let playlist = ['bipe'];
-
-    // 1. Se for preferencial, fala a palavra "Preferencial" antes de tudo
-    if (preferencial) {
-        playlist.push('preferencial');
-    }
+    
+    // Se for preferencial, fala apenas UMA VEZ
+    if (preferencial) playlist.push('preferencial');
 
     playlist.push('senha');
 
-    // 2. Trata a senha (P014) caractere por caractere de forma segura
-    // Convertemos para String e limpamos qualquer espaço sobrando
+    // Fala cada caractere da senha P017 (P -> 0 -> 1 -> 7)
     const senhaTexto = String(num).trim().toLowerCase();
-    
-    for (let i = 0; i < senhaTexto.length; i++) {
-        const char = senhaTexto[i];
-        // Adiciona apenas se for letra ou número (ignora pontos ou traços)
-        if (/[a-z0-9]/.test(char)) {
-            playlist.push(char);
-        }
+    for (let char of senhaTexto) {
+        if (/[a-z0-9]/.test(char)) playlist.push(char);
     }
 
     playlist.push('guiche');
 
-    // 3. Trata o guichê pegando apenas os números
+    // Pega apenas o número do guichê (Ex: "Guichê 5" vira apenas "5")
     const numGuiche = nomeGuiche.replace(/\D/g, '');
-    for (let i = 0; i < numGuiche.length; i++) {
-        playlist.push(numGuiche[i]);
+    // Se o guichê for "5", adiciona apenas o "5"
+    if(numGuiche) {
+        for (let digito of numGuiche) playlist.push(digito);
     }
 
-    // 4. Dispara a sequência (a velocidade é definida na tocarSequencia)
-    console.log("Playlist gerada para " + num + ":", playlist);
+    console.log("Playlist final:", playlist);
     tocarSequencia(playlist, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
