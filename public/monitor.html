@@ -357,34 +357,31 @@
 // Variável global para o contexto de áudio
 let audioCtx = null;
 
-function falarChamada(num, nomeGuiche, preferencial) {
+function falarChamada(num, guiche, pref) {
     const videoEl = document.getElementById('player');
-    if (videoEl) { 
-        videoEl.pause(); 
-        videoEl.muted = true; 
-    }
+    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
 
+    // Cria a playlist inicial
     let playlist = ['bipe'];
     
-    // Lógica simples para preferencial
-    if (preferencial === true || preferencial === "true" || preferencial === 1) {
+    // Se for preferencial, adiciona o termo
+    if (pref === true || pref === "true" || pref === 1) {
         playlist.push('preferencial');
     }
-
     playlist.push('senha');
 
-    // Processamento direto da senha (como funcionava antes)
-    const s = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    // Trata a SENHA: Se for normal (ex: 018), garante que pegue apenas os números
+    const s = String(num).toLowerCase().replace(/[^a-z0-9]/g, '');
     for (let char of s) {
         playlist.push(char);
     }
 
     playlist.push('guiche');
 
-    // Processamento direto do guichê
-    const g = String(nomeGuiche).replace(/\D/g, '');
-    for (let d of g) {
-        playlist.push(d);
+    // Trata o GUICHÊ: Pega apenas o número (ex: 5)
+    const g = String(guiche).replace(/\D/g, '');
+    for (let numG of g) {
+        playlist.push(numG);
     }
 
     tocarSequencia(playlist, videoEl);
@@ -444,16 +441,18 @@ function retomarVideo(video) {
   SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
 
 SGA.on('chamada', (dados) => {
-    // 1. Garante a atualização visual da tela
-    if (typeof renderSenha === 'function') {
-        renderSenha(dados); 
-    } else {
-        // Fallback caso a função de render não exista
-        document.getElementById('numero-senha').innerText = dados.numero;
-        document.getElementById('guiche-numero').innerText = dados.guiche;
-    }
+    console.log("Dados recebidos do SGA:", dados);
 
-    // 2. Chama a função de áudio (Versão que funcionava)
+    // 1. FORÇA A ATUALIZAÇÃO DA TELA (Sai do "Aguardando")
+    // Usamos os IDs padrão do SGA. Verifique se são esses no seu HTML.
+    const elNumero = document.getElementById('numero-senha');
+    const elGuiche = document.getElementById('guiche-numero');
+
+    if (elNumero) elNumero.innerText = dados.numero;
+    if (elGuiche) elGuiche.innerText = dados.guiche;
+
+    // 2. CHAMA A FUNÇÃO DE ÁUDIO
+    // Passamos os dados exatamente como o servidor envia
     falarChamada(dados.numero, dados.guiche, dados.preferencial);
 });
 
