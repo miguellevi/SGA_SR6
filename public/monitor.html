@@ -399,39 +399,34 @@ function falarChamada(num, nomeGuiche, preferencial) {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // 1. Iniciamos a lista vazia e adicionamos o básico
-    let playlist = ['bipe'];
+    // 1. Criamos partes separadas para garantir que não misturem
+    let parteSenha = [];
+    let parteGuiche = [];
     
-    if (preferencial === true || preferencial === "true") {
-        playlist.push('preferencial');
+    // Configuração da Senha
+    if (preferencial === true || preferencial === "true" || preferencial === 1) {
+        parteSenha.push('preferencial');
     }
-    
-    playlist.push('senha');
+    parteSenha.push('senha');
 
-    // 2. TRATAMENTO DA SENHA (Ex: 015)
-    // Forçamos a senha a ser uma string limpa
+    // Processa a Senha (Ex: 016)
     const s = String(num).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    
-    // Adicionamos dígito por dígito manualmente
-    for (let i = 0; i < s.length; i++) {
-        playlist.push(s[i]);
+    for (let char of s) {
+        if (char.trim() !== "") parteSenha.push(char);
     }
 
-    // 3. O DIVISOR (Apenas uma vez)
-    playlist.push('guiche');
-
-    // 4. TRATAMENTO DO GUICHÊ (Ex: Guichê 5)
-    // Aqui está o segredo: ignoramos as letras e pegamos APENAS os números
-    const g = String(nomeGuiche).replace(/\D/g, ''); 
-    
-    for (let j = 0; j < g.length; j++) {
-        playlist.push(g[j]);
+    // Configuração do Guichê (Ex: 5)
+    parteGuiche.push('guiche');
+    const g = String(nomeGuiche).replace(/\D/g, ''); // Pega APENAS o número 5
+    for (let numG of g) {
+        if (numG.trim() !== "") parteGuiche.push(numG);
     }
 
-    // DEBUG: Verifique no console do navegador se a lista está correta
-    console.log("FILA DE ÁUDIO:", playlist);
+    // 2. JUNÇÃO FINAL: Aqui garantimos a ordem exata
+    const playlistFinal = ['bipe', ...parteSenha, ...parteGuiche];
 
-    tocarSequencia(playlist, videoEl);
+    console.log("Ordem de fala confirmada:", playlistFinal);
+    tocarSequencia(playlistFinal, videoEl);
 }
 // ────────────────────────────────────────────────────────────────────────────
 
