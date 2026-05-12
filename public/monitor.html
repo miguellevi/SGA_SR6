@@ -405,28 +405,60 @@ function tocarBipe(frequencia, duracao, volume) {
   oscillator.stop(audioCtx.currentTime + duracao);
 }
 function falarChamada(num, nomeGuiche, preferencial) {
-    // ... manter o código dos bipes ...
+    const videoEl = document.getElementById('player');
+    
+    // 1. Pausa o vídeo e tira o som da mídia
+    if (videoEl) {
+        videoEl.pause();
+        videoEl.muted = true;
+    }
 
-    const texto = `Senha ${num}. ${nomeGuiche}`;
-    const ut = new SpeechSynthesisUtterance(texto);
-    ut.lang = 'pt-BR';
+    // 2. Toca os bipes (Sinalização sonora)
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    tocarBipe(880, 0.2, 0.5);
+    setTimeout(() => tocarBipe(1100, 0.2, 0.5), 300);
 
-    // Algumas TVs só falam se o volume for definido explicitamente de novo
-    ut.volume = 1;
-    ut.rate = 1;
-
-    // Tenta falar. Se falhar silenciosamente, o 'onerror' pode avisar
-    window.speechSynthesis.speak(ut);
-
-    // DEBUG para TV: Se não falar em 2 segundos, tenta de novo sem a voz PT
+    // 3. Inicia a lógica da voz após os bipes
     setTimeout(() => {
-        if (!window.speechSynthesis.speaking) {
-            console.log("Tentando fallback sem definir voz...");
-            window.speechSynthesis.cancel();
-            const fallback = new SpeechSynthesisUtterance(texto);
-            window.speechSynthesis.speak(fallback);
+        if (!window.speechSynthesis) {
+            // Se a TV não suportar voz, retoma o vídeo imediatamente
+            retomarVideo(videoEl);
+            return;
         }
-    }, 2000);
+
+        window.speechSynthesis.cancel(); // Limpa chamadas presas
+
+        const texto = `${preferencial ? 'Atendimento preferencial.' : ''} Senha ${num}. ${nomeGuiche}.`;
+        const fala = new SpeechSynthesisUtterance(texto);
+        fala.lang = 'pt-BR';
+        fala.volume = 1;
+        fala.rate = 0.8; // Um pouco mais lento para clareza na TV
+
+        // EVENTO: Quando a voz terminar, retoma o vídeo
+        fala.onend = () => retomarVideo(videoEl);
+
+        // EVENTO: Se der erro na voz, retoma o vídeo para não travar o painel
+        fala.onerror = () => retomarVideo(videoEl);
+
+        window.speechSynthesis.speak(fala);
+
+        // SEGURANÇA: Se por algum motivo a TV "esquecer" de avisar que terminou,
+        // força a retomada do vídeo após 10 segundos.
+        setTimeout(() => retomarVideo(videoEl), 10000);
+
+    }, 800);
+}
+
+// Função auxiliar para garantir que o vídeo volte a tocar
+function retomarVideo(video) {
+    if (video) {
+        video.muted = false;
+        video.play().catch(() => {
+            // Caso o navegador bloqueie o play automático com som
+            video.muted = true;
+            video.play();
+        });
+    }
 }
   // ────────────────────────────────────────────────────────────────────────────
 
