@@ -388,41 +388,68 @@
   }
 
   function falarChamada(num, nomeGuiche, preferencial) {
-    // Bipe sempre toca
-    tocarBipe(880, 0.15, 0.8);
-    setTimeout(() => tocarBipe(1100, 0.15, 0.8), 220);
+    const videoEl = document.getElementById('player');
 
-    if (!window.speechSynthesis) return;
-
-    const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
-    const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
-
-    function falar() {
-      window.speechSynthesis.cancel();
-      const fala = new SpeechSynthesisUtterance(texto);
-      fala.lang   = 'pt-BR';
-      fala.rate   = 0.85;
-      fala.pitch  = 1;
-      fala.volume = 1;
-      if (vozPT) fala.voice = vozPT;
-
-      window.speechSynthesis.speak(fala);
-
-      // Repete após terminar
-      fala.onend = () => {
-        setTimeout(() => {
-          const fala2 = new SpeechSynthesisUtterance(texto);
-          fala2.lang   = 'pt-BR';
-          fala2.rate   = 0.85;
-          fala2.volume = 1;
-          if (vozPT) fala2.voice = vozPT;
-          window.speechSynthesis.speak(fala2);
-        }, 800);
-      };
+    // 1. Pausa e muta o vídeo
+    if (videoEl) {
+      videoEl.pause();
+      videoEl.muted = true;
     }
 
-    // Aguarda bipes terminarem (600ms) antes de falar
-    setTimeout(falar, 600);
+    // 2. Toca 3 bipes fortes
+    tocarBipe(880, 0.25, 1.0);
+    setTimeout(() => tocarBipe(1100, 0.25, 1.0), 300);
+    setTimeout(() => tocarBipe(880, 0.25, 1.0), 600);
+
+    // 3. Fala após os bipes (900ms)
+    setTimeout(() => {
+      if (!window.speechSynthesis) {
+        // Se não tiver speechSynthesis, retoma vídeo e sai
+        if (videoEl) { videoEl.muted = false; videoEl.play().catch(()=>{}); }
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const prefixo = preferencial ? 'Atendimento preferencial. ' : '';
+      const texto = `${prefixo}Senha ${num}. ${nomeGuiche}.`;
+
+      function fazerFala(onFim) {
+        const fala = new SpeechSynthesisUtterance(texto);
+        fala.lang   = 'pt-BR';
+        fala.rate   = 0.75;  // bem devagar e claro
+        fala.pitch  = 1;
+        fala.volume = 1;
+        if (vozPT) fala.voice = vozPT;
+        if (onFim) fala.onend = onFim;
+        return fala;
+      }
+
+      // Fala 1ª vez → pausa 1s → fala 2ª vez → retoma vídeo
+      const fala1 = fazerFala(() => {
+        setTimeout(() => {
+          const fala2 = fazerFala(() => {
+            // Retoma vídeo após terminar tudo
+            setTimeout(() => {
+              if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {});
+              }
+            }, 500);
+          });
+          window.speechSynthesis.speak(fala2);
+        }, 1000);
+      });
+
+      window.speechSynthesis.speak(fala1);
+
+      // Segurança: se a voz travar por mais de 15s, retoma o vídeo
+      setTimeout(() => {
+        window.speechSynthesis.cancel();
+        if (videoEl) { videoEl.muted = false; videoEl.play().catch(() => {}); }
+      }, 15000);
+
+    }, 900);
   }
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -517,23 +544,28 @@
 
   // ── Botão ativar som ──────────────────────────────────────────────────────
   function ativarSom() {
-    // Ativa o áudio do vídeo
+    // Ativa AudioContext
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Ativa vídeo com som
     player.muted = false;
     player.volume = 1;
     player.play().catch(() => {});
 
-    // Inicializa AudioContext
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    // Inicializa Speech Synthesis com uma fala silenciosa para desbloquear
+    // Desbloqueia speechSynthesis — faz uma fala silenciosa obrigatória
     if (window.speechSynthesis) {
-      const teste = new SpeechSynthesisUtterance(' ');
-      teste.volume = 0;
-      window.speechSynthesis.speak(teste);
+      carregarVozes();
+      window.speechSynthesis.cancel();
+      const unlock = new SpeechSynthesisUtterance('.');
+      unlock.volume = 0.01;
+      unlock.lang = 'pt-BR';
+      if (vozPT) unlock.voice = vozPT;
+      window.speechSynthesis.speak(unlock);
+      console.log('[Som] speechSynthesis desbloqueado. Voz PT:', vozPT?.name || 'padrão');
     }
+
+    somAtivado = true;
 
     // Esconde o botão
     const btn = document.getElementById('btn-som');
