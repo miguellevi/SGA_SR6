@@ -364,27 +364,26 @@ function falarChamada(num, nomeGuiche, preferencial) {
         videoEl.muted = true; 
     }
 
-    // Inicializa o áudio apenas no primeiro clique/chamada
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
     let playlist = ['bipe'];
-    const ehPreferencial = (preferencial === true || preferencial === "true" || preferencial === 1);
+    
+    // Lógica simples para preferencial
+    if (preferencial === true || preferencial === "true" || preferencial === 1) {
+        playlist.push('preferencial');
+    }
 
-    if (ehPreferencial) playlist.push('preferencial');
     playlist.push('senha');
 
-    // Tratamento da Senha (018, P018, etc)
-    const senhaTexto = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (let char of senhaTexto) {
+    // Processamento direto da senha (como funcionava antes)
+    const s = String(num).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    for (let char of s) {
         playlist.push(char);
     }
 
     playlist.push('guiche');
 
-    // Tratamento do Guichê (Pega apenas o número)
-    const numGuiche = String(nomeGuiche).replace(/\D/g, '');
-    for (let d of numGuiche) {
+    // Processamento direto do guichê
+    const g = String(nomeGuiche).replace(/\D/g, '');
+    for (let d of g) {
         playlist.push(d);
     }
 
@@ -396,19 +395,23 @@ function tocarSequencia(lista, videoEl) {
         setTimeout(() => {
             if (videoEl) {
                 videoEl.muted = false;
-                videoEl.play().catch(() => { videoEl.muted = true; videoEl.play(); });
+                videoEl.play().catch(() => {
+                    videoEl.muted = true;
+                    videoEl.play();
+                });
             }
-        }, 300);
+        }, 400); // Aumentamos um pouco o tempo para a TV respirar
         return;
     }
 
     const proximo = lista.shift();
     const som = new Audio(`/sons/${proximo}.mp3`);
-    som.playbackRate = 1.3; // Velocidade que você pediu
+    som.playbackRate = 1.3;
 
     som.play().catch(() => tocarSequencia(lista, videoEl));
 
     som.onended = () => {
+        // COMANDO CRÍTICO: Limpa o áudio da memória para o vídeo voltar
         som.src = ""; 
         som.load();
         tocarSequencia(lista, videoEl);
@@ -441,18 +444,16 @@ function retomarVideo(video) {
   SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
 
 SGA.on('chamada', (dados) => {
-    // 1. ATUALIZA A TELA (Importante para sair do "Aguardando")
-    // Verifique se os IDs abaixo (numero-senha e guiche-numero) 
-    // são os mesmos que você usa no seu HTML
-    if (document.getElementById('numero-senha')) {
+    // 1. Garante a atualização visual da tela
+    if (typeof renderSenha === 'function') {
+        renderSenha(dados); 
+    } else {
+        // Fallback caso a função de render não exista
         document.getElementById('numero-senha').innerText = dados.numero;
-    }
-    if (document.getElementById('guiche-numero')) {
         document.getElementById('guiche-numero').innerText = dados.guiche;
     }
 
-    // 2. CHAMA A FUNÇÃO DE ÁUDIO UNIFICADA
-    // Usamos apenas 'falarChamada' para evitar o erro de "not defined"
+    // 2. Chama a função de áudio (Versão que funcionava)
     falarChamada(dados.numero, dados.guiche, dados.preferencial);
 });
 
