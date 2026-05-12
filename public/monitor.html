@@ -386,6 +386,23 @@
     carregarVozes();
     window.speechSynthesis.onvoiceschanged = carregarVozes;
   }
+
+ // Gerador de bipe via software (Web Audio API)
+function tocarBipe(frequencia, duracao, volume) {
+  if (!audioCtx) return;
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(frequencia, audioCtx.currentTime);
+  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  oscillator.start();
+  oscillator.stop(audioCtx.currentTime + duracao);
+}
   function falarChamada(num, nomeGuiche, preferencial) {
     const videoEl = document.getElementById('player');
 
