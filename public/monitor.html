@@ -328,10 +328,9 @@
     </div>
   </div>
 
- <!--
   <div class="divider"></div>
 
-  <!-- ══ LADO DIREITO: VÍDEOS ══ 
+  <!-- ══ LADO DIREITO: VÍDEOS ══ -->
   <div class="news-side">
     <div class="video-wrap">
       <video id="player" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover">
@@ -339,7 +338,6 @@
       </video>
     </div>
   </div>
- -->
 
 </div>
 
@@ -361,18 +359,19 @@
 let audioCtx = null;
 
 function falarChamada(num, guiche, pref) {
-    // 1. Inicializa o contexto de áudio se necessário
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const videoEl = document.getElementById('player');
+    if (videoEl) { videoEl.pause(); videoEl.muted = true; }
 
-    // 2. Cria a playlist
+    // Cria a playlist inicial
     let playlist = ['bipe'];
     
+    // Se for preferencial, adiciona o termo
     if (pref === true || pref === "true" || pref === 1) {
         playlist.push('preferencial');
     }
     playlist.push('senha');
 
+    // Trata a SENHA: Se for normal (ex: 018), garante que pegue apenas os números
     const s = String(num).toLowerCase().replace(/[^a-z0-9]/g, '');
     for (let char of s) {
         playlist.push(char);
@@ -380,34 +379,40 @@ function falarChamada(num, guiche, pref) {
 
     playlist.push('guiche');
 
+    // Trata o GUICHÊ: Pega apenas o número (ex: 5)
     const g = String(guiche).replace(/\D/g, '');
     for (let numG of g) {
         playlist.push(numG);
     }
 
-    // 3. Toca a sequência (Note que removemos o parâmetro videoEl)
-    tocarSequencia(playlist);
+    tocarSequencia(playlist, videoEl);
 }
 
-function tocarSequencia(lista) {
+function tocarSequencia(lista, videoEl) {
     if (lista.length === 0) {
-        console.log("Fim da chamada de voz.");
+        setTimeout(() => {
+            if (videoEl) {
+                videoEl.muted = false;
+                videoEl.play().catch(() => {
+                    videoEl.muted = true;
+                    videoEl.play();
+                });
+            }
+        }, 400); // Aumentamos um pouco o tempo para a TV respirar
         return;
     }
 
     const proximo = lista.shift();
     const som = new Audio(`/sons/${proximo}.mp3`);
-    som.playbackRate = 1.5; 
+    som.playbackRate = 1.3;
 
-    som.play().catch(err => {
-        console.warn("Erro ao tocar:", proximo, err);
-        tocarSequencia(lista); // Pula para o próximo se falhar
-    });
+    som.play().catch(() => tocarSequencia(lista, videoEl));
 
     som.onended = () => {
+        // COMANDO CRÍTICO: Limpa o áudio da memória para o vídeo voltar
         som.src = ""; 
         som.load();
-        tocarSequencia(lista);
+        tocarSequencia(lista, videoEl);
     };
 }
 
@@ -487,8 +492,23 @@ function retomarVideo(video) {
     }).join('');
   }
 
+  // ── Player de Vídeos em Loop ──────────────────────────────────────────────
+  const VIDEOS = [
+    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4',
+  ];
+
   let videoAtual = 0;
   const player = document.getElementById('player');
+
+  function carregarVideo(idx) {
+    player.src = VIDEOS[idx];
+    player.load();
+    player.play().catch(() => {
+      // Autoplay bloqueado — tenta mudo
+      player.muted = true;
+      player.play();
+    });
+  }
 
   player.addEventListener('ended', () => {
     videoAtual = (videoAtual + 1) % VIDEOS.length;
@@ -501,20 +521,33 @@ function retomarVideo(video) {
     setTimeout(() => carregarVideo(videoAtual), 2000);
   });
 
-  // ── Botão ativar som ──────────────────────────────────────────────────────
-function ativarSom() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+  // Inicia o primeiro vídeo
+  carregarVideo(0);
+  // ────────────────────────────────────────────────────────────────────────────
 
-    // Apenas um bipe para "acordar" o navegador
+  // ── Botão ativar som ──────────────────────────────────────────────────────
+  function ativarSom() {
+    // Ativa AudioContext
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // Ativa vídeo com som
+    player.muted = false;
+    player.volume = 0;
+    player.play().catch(() => {});
+
+    // Desbloqueia Audio via MP3 silencioso
     const unlock = new Audio("/sons/bipe.mp3");
-    unlock.volume = 0.1;
+    unlock.volume = 0.01;
     unlock.play().catch(() => {});
-    
-    const btn = document.getElementById('btn-som');
-    btn.classList.add('sumindo');
-    setTimeout(() => btn.style.display = 'none', 600);
-}
+    console.log("[Som] Áudio ativado — pronto para chamadas");
+
+
+    // Esconde o botão
+    const btn = document.getElementById('btn-som');
+    btn.classList.add('sumindo');
+    setTimeout(() => btn.style.display = 'none', 600);
+  }
 
   // Esconde automaticamente após 15 segundos se não clicar
   setTimeout(() => {
