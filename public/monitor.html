@@ -404,7 +404,7 @@ function tocarSequencia(lista, videoEl) {
 
     const proximo = lista.shift();
     const som = new Audio(`/sons/${proximo}.mp3`);
-    som.playbackRate = 1.8;
+    som.playbackRate = 1.8; // Velocidade da voz
 
     som.play().catch(() => tocarSequencia(lista, videoEl));
 
