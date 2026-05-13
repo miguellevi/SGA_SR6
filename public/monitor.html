@@ -487,30 +487,8 @@ function retomarVideo(video) {
     }).join('');
   }
 
-  // ── Player de Vídeos em Loop ──────────────────────────────────────────────
-  const VIDEOS = [
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890961/Video_02_dh7bvp.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890941/Video_03_muw4gr.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777890963/Video_04_lpjujh.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777714717/Video_01_bo0lcq.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891150/Video_06_q5cqdy.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891163/Video_05_hat8z4.mp4',
-    'https://res.cloudinary.com/dm1i6fyln/video/upload/v1777891201/Video_07_yjoybf.mp4',
-  ];
-
   let videoAtual = 0;
   const player = document.getElementById('player');
-
-  function carregarVideo(idx) {
-    player.src = VIDEOS[idx];
-    player.load();
-    player.play().catch(() => {
-      // Autoplay bloqueado — tenta mudo
-      player.muted = true;
-      player.play();
-    });
-  }
 
   player.addEventListener('ended', () => {
     videoAtual = (videoAtual + 1) % VIDEOS.length;
@@ -523,22 +501,16 @@ function retomarVideo(video) {
     setTimeout(() => carregarVideo(videoAtual), 2000);
   });
 
-  // Inicia o primeiro vídeo
-  carregarVideo(0);
-  // ────────────────────────────────────────────────────────────────────────────
-
   // ── Botão ativar som ──────────────────────────────────────────────────────
 function ativarSom() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Desbloqueia o áudio com um bipe rápido
+    // Apenas um bipe para "acordar" o navegador
     const unlock = new Audio("/sons/bipe.mp3");
     unlock.volume = 0.1;
     unlock.play().catch(() => {});
     
-    console.log("[Som] Áudio desbloqueado");
-
     const btn = document.getElementById('btn-som');
     btn.classList.add('sumindo');
     setTimeout(() => btn.style.display = 'none', 600);
