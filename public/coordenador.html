@@ -50,6 +50,7 @@
   <img src="/img/logo-colorida.png" alt="Prefeitura de Fortaleza — Regional 6">
   <div style="display:flex;align-items:center;gap:.75rem">
     <span style="font-size:13px;color:var(--text-muted)" id="nome-coord"></span>
+    <button class="btn btn-sm" onclick="atualizarTudo()">🔄 Atualizar</button>
     <button class="btn btn-sm btn-danger" onclick="resetarFila()">🔄 Resetar fila</button>
     <button class="btn btn-sm" onclick="sair()">Sair</button>
   </div>
@@ -585,6 +586,55 @@
     SGA.limparSessao();
     window.location.href='/login';
   }
+
+  async function atualizarTudo() {
+  try {
+    // efeito visual no botão
+    const btn = event.target;
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Atualizando...';
+    // busca estado atual
+    const d = await fetch('/api/estado').then(r => r.json());
+    // atualiza variáveis
+    guichesData = d.guiches || [];
+    // reaproveita suas funções existentes
+    renderGuiches(guichesData);
+    atualizarStats(
+      d.filaNormalQtd,
+      d.filaPrefQtd,
+      guichesData
+    );
+
+    popularSelectGuiches(guichesData);
+    atualizarChFila(
+      d.filaNormalQtd,
+      d.filaPrefQtd
+    );
+    atualizarProximas(
+      d.contadorNormal,
+      d.contadorPref,
+      d.contadorBaseNormal,
+      d.contadorBasePref
+    );
+    // atualiza relatório
+    await carregarRelatorio();
+    // feedback visual
+    btn.innerHTML = '✅ Atualizado';
+    setTimeout(() => {
+      btn.innerHTML = textoOriginal;
+      btn.disabled = false;
+    }, 1500);
+  } catch (err) {
+    console.error(err);
+    const btn = event.target;
+    btn.innerHTML = '❌ Erro';
+    setTimeout(() => {
+      btn.innerHTML = '🔄 Atualizar';
+      btn.disabled = false;
+    }, 2000);
+  }
+}
 
   SGA.iniciarRealtime();
   SGA.carregarEstado();
