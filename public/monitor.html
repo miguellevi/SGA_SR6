@@ -357,19 +357,23 @@ function falarChamada(num, guiche, pref) {
     }
     playlist.push('senha');
 
-    // Trata a SENHA: Se for normal (ex: 018), garante que pegue apenas os números
-    const s = String(num).toLowerCase().replace(/[^a-z0-9]/g, '');
-    for (let char of s) {
-        playlist.push(char);
-    }
+// Trata a SENHA
+let s = String(num).replace(/\D/g, '');
+s = s ? parseInt(s, 10).toString() : '0';
 
-    playlist.push('guiche');
+for (let char of s) {
+    playlist.push(char);
+}
 
-    // Trata o GUICHÊ: Pega apenas o número (ex: 5)
-    const g = String(guiche).replace(/\D/g, '');
-    for (let numG of g) {
-        playlist.push(numG);
-    }
+playlist.push('guiche');
+
+// Trata o GUICHÊ
+let g = String(guiche).replace(/\D/g, '');
+g = g ? parseInt(g, 10).toString() : '0';
+
+for (let numG of g) {
+    playlist.push(numG);
+}
 
 tocarSequencia(playlist);
 }
