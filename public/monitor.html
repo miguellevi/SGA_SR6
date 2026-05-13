@@ -536,19 +536,12 @@ function retomarVideo(video) {
     player.volume = 1;
     player.play().catch(() => {});
 
-    // Desbloqueia speechSynthesis — faz uma fala silenciosa obrigatória
-    if (window.speechSynthesis) {
-      carregarVozes();
-      window.speechSynthesis.cancel();
-      const unlock = new SpeechSynthesisUtterance('.');
-      unlock.volume = 0.01;
-      unlock.lang = 'pt-BR';
-      if (vozPT) unlock.voice = vozPT;
-      window.speechSynthesis.speak(unlock);
-      console.log('[Som] speechSynthesis desbloqueado. Voz PT:', vozPT?.name || 'padrão');
-    }
+    // Desbloqueia Audio via MP3 silencioso
+    const unlock = new Audio("/sons/bipe.mp3");
+    unlock.volume = 0.01;
+    unlock.play().catch(() => {});
+    console.log("[Som] Áudio ativado — pronto para chamadas");
 
-    somAtivado = true;
 
     // Esconde o botão
     const btn = document.getElementById('btn-som');
