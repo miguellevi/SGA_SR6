@@ -382,16 +382,27 @@ function tocarSequencia(lista) {
     if (lista.length === 0) return;
 
     const proximo = lista.shift();
+
+    console.log("Tocando:", proximo);
+
     const som = new Audio(`/sons/${proximo}.mp3`);
-    som.playbackRate = 1.3;
 
-    som.play().catch(() => tocarSequencia(lista));
+    // velocidade mais segura
+    som.playbackRate = 1.0;
 
-    som.onended = () => {
-        som.src = "";
-        som.load();
+    som.addEventListener('ended', () => {
         tocarSequencia(lista);
-    };
+    });
+
+    som.addEventListener('error', () => {
+        console.error("Erro ao tocar:", proximo);
+        tocarSequencia(lista);
+    });
+
+    som.play().catch(err => {
+        console.error("Falha:", proximo, err);
+        tocarSequencia(lista);
+    });
 }
 
 // ────────────────────────────────────────────────────────────────────────────
