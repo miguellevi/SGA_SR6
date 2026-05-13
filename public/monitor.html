@@ -378,31 +378,25 @@ for (let numG of g) {
 tocarSequencia(playlist);
 }
 
-function tocarSequencia(lista) {
-    if (lista.length === 0) return;
-
-    const proximo = lista.shift();
-
-    console.log("Tocando:", proximo);
-
-    const som = new Audio(`/sons/${proximo}.mp3`);
-
-    // velocidade mais segura
-    som.playbackRate = 1.0;
-
-    som.addEventListener('ended', () => {
-        tocarSequencia(lista);
-    });
-
-    som.addEventListener('error', () => {
-        console.error("Erro ao tocar:", proximo);
-        tocarSequencia(lista);
-    });
-
-    som.play().catch(err => {
-        console.error("Falha:", proximo, err);
-        tocarSequencia(lista);
-    });
+async function tocarSequencia(lista) {
+    for (const item of lista) {
+        console.log("Tocando:", item);
+        await new Promise((resolve) => {
+            const som = new Audio(`/sons/${item}.mp3`);
+            som.playbackRate = 1.0;
+            som.onended = () => {
+                resolve();
+            };
+            som.onerror = () => {
+                console.error("Erro ao tocar:", item);
+                resolve();
+            };
+            som.play().catch((err) => {
+                console.error("Falha:", item, err);
+                resolve();
+            });
+        });
+    }
 }
 
 // ────────────────────────────────────────────────────────────────────────────
