@@ -379,7 +379,7 @@ function tocarSequencia(lista) {
 
     const proximo = lista.shift();
     const som = new Audio(`/sons/${proximo}.mp3`);
-    som.playbackRate = 1.3;
+    som.playbackRate = 1.5;
 
     som.play().catch(() => tocarSequencia(lista));
 
