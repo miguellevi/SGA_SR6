@@ -528,28 +528,21 @@ function retomarVideo(video) {
   // ────────────────────────────────────────────────────────────────────────────
 
   // ── Botão ativar som ──────────────────────────────────────────────────────
-  function ativarSom() {
-    // Ativa AudioContext
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+function ativarSom() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // Ativa vídeo com som
-    player.muted = false;
-    player.volume = 1;
-    player.play().catch(() => {});
-
-    // Desbloqueia Audio via MP3 silencioso
+    // Desbloqueia o áudio com um bipe rápido
     const unlock = new Audio("/sons/bipe.mp3");
-    unlock.volume = 0.01;
+    unlock.volume = 0.1;
     unlock.play().catch(() => {});
-    console.log("[Som] Áudio ativado — pronto para chamadas");
+    
+    console.log("[Som] Áudio desbloqueado");
 
-
-    // Esconde o botão
-    const btn = document.getElementById('btn-som');
-    btn.classList.add('sumindo');
-    setTimeout(() => btn.style.display = 'none', 600);
-  }
+    const btn = document.getElementById('btn-som');
+    btn.classList.add('sumindo');
+    setTimeout(() => btn.style.display = 'none', 600);
+}
 
   // Esconde automaticamente após 15 segundos se não clicar
   setTimeout(() => {
