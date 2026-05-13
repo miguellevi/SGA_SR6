@@ -357,13 +357,12 @@ function falarChamada(num, guiche, pref) {
     }
     playlist.push('senha');
 
+ 
 // Trata a SENHA
 let s = String(num).replace(/\D/g, '');
 s = s ? parseInt(s, 10).toString() : '0';
 
-for (let char of s) {
-    playlist.push(char);
-}
+playlist.push(s);
 
 playlist.push('guiche');
 
@@ -371,9 +370,7 @@ playlist.push('guiche');
 let g = String(guiche).replace(/\D/g, '');
 g = g ? parseInt(g, 10).toString() : '0';
 
-for (let numG of g) {
-    playlist.push(numG);
-}
+playlist.push(g);
 
 tocarSequencia(playlist);
 }
