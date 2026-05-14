@@ -122,6 +122,18 @@
 
   document.getElementById('nome-usuario').textContent = SGA.nome;
 
+  // Carrega guichês imediatamente via fetch (não espera o Realtime)
+  fetch('/api/estado')
+    .then(r => r.json())
+    .then(d => {
+      renderGuicheGrid(d.guiches || []);
+      atualizarFila(d.filaNormalQtd, d.filaPrefQtd);
+    })
+    .catch(() => {
+      document.getElementById('guiche-grid').innerHTML =
+        '<p style="color:var(--red);font-size:14px">Erro ao carregar guichês. Verifique a conexão.</p>';
+    });
+
   // ── Realtime ──
   SGA.on('estado_inicial', d => {
     renderGuicheGrid(d.guiches || []);
