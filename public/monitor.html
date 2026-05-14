@@ -355,8 +355,9 @@ function falarChamada(num, guiche, pref) {
     }
     playlist.push('senha');
 
-    // Trata a SENHA — mantém zeros à esquerda (ex: "015" → 0,1,5)
-    let s = String(num).replace(/\D/g, ''); // remove letras mas mantém zeros
+    // Trata a SENHA — remove prefixo de letra (P, N, etc) e mantém só os dígitos
+    let s = String(num).replace(/^[a-zA-Z]+/, ''); // remove só letras do início (ex: "P001" → "001")
+    s = s.replace(/\D/g, ''); // remove qualquer outro não-dígito
     if (!s) s = '0';
     for (let char of s) {
         playlist.push(char);
@@ -364,10 +365,12 @@ function falarChamada(num, guiche, pref) {
 
     playlist.push('guiche');
 
-    // Trata o GUICHÊ — pega apenas os números do nome (ex: "Guichê 5" → "5")
-    let g = String(guiche).replace(/\D/g, '');
-    if (!g) g = '0';
-    // Converte para número e volta para string para remover zeros à esquerda do guichê
+    // Trata o GUICHÊ — pega APENAS o primeiro número após "Guichê "
+    // ex: "Guichê 5 (Roque)" → "5"
+    // ex: "Guichê 5 · 014 (Laura)" → "5"
+    let gMatch = String(guiche).match(/\d+/); // pega o PRIMEIRO número
+    let g = gMatch ? gMatch[0] : '0';
+    // Remove zeros à esquerda do guichê
     g = parseInt(g, 10).toString();
     for (let char of g) {
         playlist.push(char);
