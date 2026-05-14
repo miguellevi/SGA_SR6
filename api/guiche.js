@@ -18,6 +18,18 @@ module.exports = async function handler(req, res) {
       return res.json({ ok: true, guiche });
     }
 
+    if (req.method === 'POST' && acao === 'finalizar') {
+      const { guicheId } = req.body;
+      // Limpa apenas a senha_atual — mantém atendente e ativo
+      await supabase.from('guiches')
+        .update({ senha_atual: null, preferencial: false })
+        .eq('id', guicheId);
+      await supabase.from('eventos').insert({
+        tipo: 'guiches_atualizados', payload: '{}', criado_em: new Date().toISOString()
+      });
+      return res.json({ ok: true });
+    }
+
     if (req.method === 'POST' && acao === 'liberar') {
       const { guicheId } = req.body;
       await supabase.from('guiches').update({ atendente: null, ativo: false, senha_atual: null }).eq('id', guicheId);
