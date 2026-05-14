@@ -348,34 +348,32 @@
 let audioCtx = null;
 
 function falarChamada(num, guiche, pref) {
-    // Cria a playlist inicial
     let playlist = ['bipe'];
     
-    // Se for preferencial, adiciona o termo
     if (pref === true || pref === "true" || pref === 1) {
         playlist.push('preferencial');
     }
     playlist.push('senha');
 
-// Trata a SENHA
-let s = String(num).replace(/\D/g, '');
-s = s ? parseInt(s, 10).toString() : '0';
+    // Trata a SENHA — mantém zeros à esquerda (ex: "015" → 0,1,5)
+    let s = String(num).replace(/\D/g, ''); // remove letras mas mantém zeros
+    if (!s) s = '0';
+    for (let char of s) {
+        playlist.push(char);
+    }
 
-for (let char of s) {
-    playlist.push(char);
-}
+    playlist.push('guiche');
 
-playlist.push('guiche');
+    // Trata o GUICHÊ — pega apenas os números do nome (ex: "Guichê 5" → "5")
+    let g = String(guiche).replace(/\D/g, '');
+    if (!g) g = '0';
+    // Converte para número e volta para string para remover zeros à esquerda do guichê
+    g = parseInt(g, 10).toString();
+    for (let char of g) {
+        playlist.push(char);
+    }
 
-// Trata o GUICHÊ
-let g = String(guiche).replace(/\D/g, '');
-g = g ? parseInt(g, 10).toString() : '0';
-
-for (let numG of g) {
-    playlist.push(numG);
-}
-
-tocarSequencia(playlist);
+    tocarSequencia(playlist);
 }
 
 async function tocarSequencia(lista) {

@@ -98,6 +98,9 @@
     <div class="sa-label">Atendendo agora</div>
     <div class="sa-num" id="sa-num"></div>
     <div class="sa-pref" id="sa-pref"></div>
+    <button class="btn btn-danger btn-full mt-2" onclick="finalizarAtendimento()" style="font-size:13px;padding:8px">
+      ✅ Finalizar atendimento
+    </button>
   </div>
 
   <div class="info-box">
@@ -188,7 +191,16 @@
     SGA.carregarEstado();
   }
 
-  function mostrarSenhaAtual(c) {
+  async function finalizarAtendimento() {
+    if (!meuGuiche) return;
+    const res = await SGA.fetch('/api/guiche?acao=finalizar', {
+      method: 'POST', body: { guicheId: meuGuiche.id }
+    });
+    if (res.ok) {
+      document.getElementById('senha-atual-box').style.display = 'none';
+      document.getElementById('sa-num').textContent = '';
+    }
+  }
     const box = document.getElementById('senha-atual-box');
     box.style.display = 'block';
     const numEl = document.getElementById('sa-num');
