@@ -9,14 +9,21 @@ module.exports = async function handler(req, res) {
     const { acao } = req.query;
 
     if (req.method === 'POST' && acao === 'resetar') {
+      // Apaga fila
       await supabase.from('fila').delete().neq('id', 0);
-      await supabase.from('guiches').update({ senha_atual: null, preferencial: false });
-      const { data: cfg } = await supabase.from('config').select('contador_base_normal, contador_base_pref').eq('id', 1).single();
+
+      // Zera contadores — próxima senha será 001 e P001
       await supabase.from('config').update({
-        contador_normal: cfg?.contador_base_normal || 0,
-        contador_pref:   cfg?.contador_base_pref   || 0
+        contador_normal: 0,
+        contador_pref:   0,
+        contador_base_normal: 0,
+        contador_base_pref:   0
       }).eq('id', 1);
-      await supabase.from('eventos').insert({ tipo: 'fila_resetada', payload: '{}', criado_em: new Date().toISOString() });
+
+      // Notifica em tempo real
+      await supabase.from('eventos').insert({
+        tipo: 'fila_resetada', payload: '{}', criado_em: new Date().toISOString()
+      });
       return res.json({ ok: true });
     }
 
