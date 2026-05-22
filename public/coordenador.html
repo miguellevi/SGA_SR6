@@ -146,8 +146,25 @@
 
   <!-- Relatório -->
   <div class="tab-pane" id="tab-relatorio">
+    <!-- Filtros de período -->
+    <div style="display:flex;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-sm" id="fp-hoje"    onclick="filtrarPeriodo('hoje')"    >Hoje</button>
+      <button class="btn btn-sm" id="fp-semana"  onclick="filtrarPeriodo('semana')"  >Esta semana</button>
+      <button class="btn btn-sm" id="fp-mes"     onclick="filtrarPeriodo('mes')"     >Este mês</button>
+      <button class="btn btn-sm" id="fp-custom"  onclick="filtrarPeriodo('custom')"  >Personalizado</button>
+      <div id="custom-dates" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <input type="date" id="data-inicio" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
+        <span style="font-size:13px;color:var(--text-muted)">até</span>
+        <input type="date" id="data-fim"    style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
+        <button class="btn btn-sm btn-primary" onclick="carregarRelatorio()">Buscar</button>
+      </div>
+    </div>
+
+    <!-- Resumo do período -->
+    <div id="rel-resumo" style="display:flex;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap"></div>
+
     <div class="rel-filters">
-      <input type="text" id="filtro-rel" placeholder="Filtrar..." oninput="filtrarRel()">
+      <input type="text" id="filtro-rel" placeholder="Filtrar por senha, guichê ou atendente..." oninput="filtrarRel()">
       <button class="btn btn-sm" onclick="carregarRelatorio()">Atualizar</button>
       <button class="btn btn-sm" onclick="exportarCSV()">⬇ CSV</button>
       <button class="btn btn-sm btn-primary" onclick="exportarPDF()">⬇ PDF</button>
@@ -155,7 +172,7 @@
     <div class="card">
       <div class="table-wrap">
         <table>
-          <thead><tr><th>#</th><th>Senha</th><th>Tipo</th><th>Guichê</th><th>Atendente</th><th>Hora</th></tr></thead>
+          <thead><tr><th>#</th><th>Data</th><th>Senha</th><th>Tipo</th><th>Guichê</th><th>Atendente</th><th>Hora</th></tr></thead>
           <tbody id="rel-body"></tbody>
         </table>
       </div>
@@ -417,19 +434,112 @@
   }
 
   // ── Relatório ──
+  let periodoAtual = 'hoje';
+
+  function filtrarPeriodo(p) {
+    periodoAtual = p;
+    // Destaca botão ativo
+    ['hoje','semana','mes','custom'].forEach(id => {
+      document.getElementById('fp-'+id).classList.toggle('btn-primary', id === p);
+    });
+    // Mostra/esconde datas personalizadas
+    const customDates = document.getElementById('custom-dates');
+    customDates.style.display = p === 'custom' ? 'flex' : 'none';
+    if (p !== 'custom') carregarRelatorio();
+  }
+
+  function calcularPeriodo() {
+    const hoje = new Date();
+    const fmt = d => d.toLocaleDateString('pt-BR');
+
+    if (periodoAtual === 'hoje') {
+      return { inicio: fmt(hoje), fim: fmt(hoje) };
+    }
+    if (periodoAtual === 'semana') {
+      const seg = new Date(hoje);
+      seg.setDate(hoje.getDate() - hoje.getDay() + (hoje.getDay() === 0 ? -6 : 1));
+      return { inicio: fmt(seg), fim: fmt(hoje) };
+    }
+    if (periodoAtual === 'mes') {
+      const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      return { inicio: fmt(ini), fim: fmt(hoje) };
+    }
+    if (periodoAtual === 'custom') {
+      const ini = document.getElementById('data-inicio').value;
+      const fim = document.getElementById('data-fim').value;
+      if (!ini || !fim) return null;
+      // Converte de yyyy-mm-dd para dd/mm/yyyy
+      const fmtInput = v => v.split('-').reverse().join('/');
+      return { inicio: fmtInput(ini), fim: fmtInput(fim) };
+    }
+    return { inicio: fmt(hoje), fim: fmt(hoje) };
+  }
+
+  function datasEntrePeriodo(data, inicio, fim) {
+    // Converte dd/mm/yyyy para Date
+    const toDate = s => { const [d,m,y] = s.split('/'); return new Date(y,m-1,d); };
+    const d = toDate(data), i = toDate(inicio), f = toDate(fim);
+    return d >= i && d <= f;
+  }
+
   async function carregarRelatorio() {
-    const d = await SGA.fetch('/api/dados?recurso=relatorio');
-    relatorioData = d.relatorio || [];
-    document.getElementById('st-hoje').textContent = d.total || 0;
+    const periodo = calcularPeriodo();
+    if (!periodo) return;
+
+    // Busca todos os registros do período via Supabase
+    const res = await SGA.fetch(`/api/dados?recurso=relatorio&inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`);
+    relatorioData = (res.relatorio || []).filter(r =>
+      datasEntrePeriodo(r.data, periodo.inicio, periodo.fim)
+    );
+
+    // Atualiza contador
+    document.getElementById('st-hoje').textContent = relatorioData.length;
+
+    // Resumo
+    renderResumo(relatorioData, periodo);
     renderRelatorio(relatorioData);
+  }
+
+  function renderResumo(rows, periodo) {
+    const total  = rows.length;
+    const prefs  = rows.filter(r => r.preferencial).length;
+    const normais = total - prefs;
+
+    // Contagem por atendente
+    const porAtend = {};
+    rows.forEach(r => { porAtend[r.atendente] = (porAtend[r.atendente]||0)+1; });
+    const topAtend = Object.entries(porAtend).sort((a,b)=>b[1]-a[1])[0];
+
+    const label = periodo.inicio === periodo.fim
+      ? periodo.inicio
+      : `${periodo.inicio} a ${periodo.fim}`;
+
+    document.getElementById('rel-resumo').innerHTML = `
+      <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
+        📅 <strong>${label}</strong>
+      </div>
+      <div style="background:var(--gray-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
+        Total: <strong>${total}</strong>
+      </div>
+      <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
+        Normal: <strong>${normais}</strong>
+      </div>
+      <div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
+        Preferencial: <strong>${prefs}</strong>
+      </div>
+      ${topAtend ? `<div style="background:var(--green-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
+        🏆 Mais atendimentos: <strong>${topAtend[0]}</strong> (${topAtend[1]})
+      </div>` : ''}
+    `;
   }
 
   function renderRelatorio(rows) {
     document.getElementById('rel-body').innerHTML = !rows.length
-      ? '<tr><td colspan="6" class="text-center text-muted" style="padding:2rem">Nenhum atendimento hoje</td></tr>'
+      ? '<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">Nenhum atendimento no período</td></tr>'
       : rows.map((r,i)=>`
           <tr>
             <td class="text-muted">${rows.length-i}</td>
+            <td style="font-size:12px;color:var(--text-muted)">${r.data||''}</td>
             <td><strong>${r.num}</strong></td>
             <td>${r.preferencial?'<span class="badge badge-amber">Preferencial</span>':'<span class="badge badge-gray">Normal</span>'}</td>
             <td>${r.nome_guiche}</td>
@@ -439,13 +549,17 @@
   }
 
   function filtrarRel() {
-    const q=document.getElementById('filtro-rel').value.toLowerCase();
-    renderRelatorio(relatorioData.filter(r=>
-      r.num.toLowerCase().includes(q)||
-      (r.nome_guiche||'').toLowerCase().includes(q)||
-      (r.atendente||'').toLowerCase().includes(q)
+    const q = document.getElementById('filtro-rel').value.toLowerCase();
+    renderRelatorio(relatorioData.filter(r =>
+      r.num.toLowerCase().includes(q) ||
+      (r.nome_guiche||'').toLowerCase().includes(q) ||
+      (r.atendente||'').toLowerCase().includes(q) ||
+      (r.data||'').includes(q)
     ));
   }
+
+  // Inicializa com "Hoje" ativo
+  document.getElementById('fp-hoje').classList.add('btn-primary');
 
   function exportarCSV() {
     const header='Senha,Tipo,Guichê,Atendente,Hora,Data\n';
