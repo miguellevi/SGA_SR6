@@ -10,9 +10,31 @@ module.exports = async function handler(req, res) {
 
     // ── Relatório ──
     if (recurso === 'relatorio' && req.method === 'GET') {
-      const hoje = new Date().toLocaleDateString('pt-BR');
-      const { data } = await supabase.from('relatorio').select('*').eq('data', hoje).order('criado_em');
-      return res.json({ ok: true, relatorio: data || [], total: data?.length || 0 });
+      const inicio = req.query.inicio || new Date().toLocaleDateString('pt-BR');
+      const fim    = req.query.fim    || new Date().toLocaleDateString('pt-BR');
+
+      // Busca registros — filtra por data no JS pois o campo é string dd/mm/yyyy
+      const { data } = await supabase
+        .from('relatorio')
+        .select('*')
+        .order('criado_em', { ascending: true });
+
+      // Filtra pelo período
+      function toDate(s) {
+        const [d,m,y] = s.split('/');
+        return new Date(y, m-1, d);
+      }
+      const dIni = toDate(inicio);
+      const dFim = toDate(fim);
+      dFim.setHours(23,59,59);
+
+      const filtrado = (data || []).filter(r => {
+        if (!r.data) return false;
+        const d = toDate(r.data);
+        return d >= dIni && d <= dFim;
+      });
+
+      return res.json({ ok: true, relatorio: filtrado, total: filtrado.length });
     }
 
     // ── Usuários ──
