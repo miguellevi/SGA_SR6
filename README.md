@@ -224,4 +224,4 @@ Desenvolvido para uso interno da **Prefeitura de Fortaleza — Secretaria Region
 
 ---
 
-*Desenvolvido com ❤️ para melhorar o atendimento ao cidadão.*
+*Desenvolvido para melhorar o atendimento ao cidadão.*
