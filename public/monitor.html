@@ -269,7 +269,7 @@
   function mostrarChamada(c, animar) {
     const box = document.getElementById('call-box');
     box.className = 'call-box' + (c.preferencial?' pref':'') + (animar?' new-call':'');
-    document.getElementById('call-pref').textContent = c.preferencial ? '★ Atendimento Preferencial' : '';
+    document.getElementById('call-pref').textContent = c.preferencial ? '★ Atendimento Preferencial ★' : '';
     document.getElementById('call-senha').textContent = 'Senha ' + c.num;
     document.getElementById('call-sep').style.display = 'block';
     document.getElementById('call-guiche').textContent = c.nomeGuiche;
