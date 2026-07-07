@@ -1,513 +1,282 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Monitor — Acolhimento</title>
-<script src="/api/env"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="/js/sga.js"></script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  body { background: #f0f2f5; color: #1a1a2e; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Monitor — Junta Militar</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <style>
+    body { display:flex; flex-direction:column; height:100vh; overflow:hidden; background:#000; }
 
-  /* ── Header ── */
-  header {
-    background: #FF6D2D;
-    border-bottom: 3px solid #e05520;
-    padding: .8rem 1.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-    height: 80px;
-  }
-  header img { height: 52px; }
-  .hdr-center { text-align: center; }
-  .hdr-setor { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: 6px; text-transform: uppercase; }
-  .hdr-right { text-align: right; }
-  .hdr-hora { font-size: 42px; font-weight: 300; color: #fff; letter-spacing: 3px; line-height: 1; }
-  .hdr-data { font-size: 15px; color: #ffe0d0; margin-top: 4px; font-weight: 400; }
+    .sga-header { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); flex-shrink:0; }
 
-  /* ── Layout 50/50 ── */
-.body-wrap {
-  flex: 1;
-  display: block;
-}
+    .monitor-body { flex:1; display:grid; grid-template-columns: 1fr 450px; overflow:hidden; }
 
-  /* ── Divisória ── */
-  .divider { background: #ffd0b0; }
+    /* ── PAINEL ESQUERDO: DESTAQUE DA SENHA ATUAL ── */
+    .left-panel { position:relative; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; padding:40px; text-align:center; }
+    
+    .marquee-wrap { position:absolute; bottom:0; left:0; right:0; padding:14px 20px; background:rgba(0,0,0,.65); overflow:hidden; white-space:nowrap; border-top:1px solid var(--border); }
+    .marquee-inner { display:inline-block; animation:marquee 35s linear infinite; font-size:.95rem; color:rgba(255,255,255,.8); letter-spacing:.04em; }
+    @keyframes marquee { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
 
-  /* ══════════════════════════════
-     LADO ESQUERDO — SGA
-  ══════════════════════════════ */
-  .sga-side {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    gap: 1.25rem;
-    overflow: hidden;
-    background: #f0f2f5;
-    min-height: 0;
-  }
+    /* Chamada atual gigante */
+    .current-call { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; position:relative; }
+    .current-call::after { content:'CHAMADA ATUAL'; position:absolute; top:20px; font-size:.8rem; font-weight:700; letter-spacing:.15em; color:var(--primary); background:rgba(255,109,45,.15); padding:6px 16px; border-radius:20px; }
+    .current-guiche { font-size:2.5rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:20px; font-weight:700; }
+    .current-ticket { font-size:12rem; font-weight:900; color:var(--primary); letter-spacing:-.03em; line-height:1; }
+    .current-service { font-size:1.8rem; color:rgba(255,255,255,.8); font-weight:600; margin-top:20px; }
+    
+    @keyframes callIn { 0%{transform:scale(.8);opacity:.4} 60%{transform:scale(1.04)} 100%{transform:scale(1);opacity:1} }
+    .animate-in { animation:callIn .4s ease-out; }
 
-  .setor-label {
-    color: #FF6D2D;
-    font-size: 55px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
+    /* ── PAINEL DIREITO: GUICHÊS E HISTÓRICO ── */
+    .right-panel { background:var(--surface2); border-left:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
 
-  .call-box {
-    min-height: 600px;
-    background: #ffffff;
-    border: 3px solid #FF6D2D;
-    border-radius: 20px;
-    padding: 2.5rem 3.5rem;
-    text-align: center;
-    width: 100%;
-    max-width: 900px;
-    transition: border-color .3s;
-    box-shadow: 0 6px 30px rgba(255,109,45,0.15);
-  }
-  .call-box.pref { border-color: #c87941; box-shadow: 0 6px 30px rgba(255,109,45,0.18); }
-  .pref-label { font-size: 15px; font-weight: 700; letter-spacing: 3px; color: #c87941; text-transform: uppercase; min-height: 22px; margin-bottom: 12px; }
-  .call-senha { font-size: 210px; font-weight: 700; color: #FF6D2D; line-height: 1; letter-spacing: 6px; }
-  .call-box.pref .call-senha { color: #c87941; }
-  .call-sep { width: 70px; height: 3px; background: #FF6D2D; margin: 16px auto; display: none; border-radius: 2px; }
-  .call-box.pref .call-sep { background: #c87941; }
-  .call-guiche { font-size: 32px; font-weight: 600; color: #FF6D2D; letter-spacing: 1px; }
-  .call-box.pref .call-guiche { color: #c87941; }
-  .call-idle { font-size: 22px; color: #b0b8c8; font-weight: 300; }
+    .panel-section { padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .panel-label { font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin-bottom:12px; }
 
-  .hist-title { font-size: 11px; letter-spacing: 2px; color: #b05030; text-transform: uppercase; text-align: center; font-weight: 600; }
-  .hist-list { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: center; }
-  .hist-item { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 13px; color: #c04010; }
-  .hist-item.pref { border-color: #f0c090; color: #a06020; background: #fff9f0; }
+    /* Status guichês */
+    .guiche-list { display:flex; flex-direction:column; gap:8px; }
+    .guiche-row { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+    .guiche-row.busy { border-color:var(--primary); background:rgba(255,109,45,.06); }
+    .gr-name { font-weight:700; font-size:.95rem; display:flex; align-items:center; gap:8px; }
+    .gr-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .dot-free{background:var(--green);box-shadow:0 0 0 3px rgba(34,197,94,.2);}
+    .dot-busy{background:var(--primary);box-shadow:0 0 0 3px rgba(255,109,45,.2);}
+    .dot-paused{background:var(--red);box-shadow:0 0 0 3px rgba(239,68,68,.2);}
+    .gr-ticket { font-size:1.6rem; font-weight:900; color:var(--primary); font-variant-numeric:tabular-nums; }
 
-  .guiches-wrap { text-align: center; }
-  .guiches-grid { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; margin-top: .5rem; }
-  .g-chip { background: #fff; border: 1px solid #ffd0b0; border-radius: 6px; padding: 5px 14px; font-size: 12px; color: #b05030; }
-  .g-chip.ativo { border-color: #FF6D2D; color: #FF6D2D; background: #fff3ee; font-weight: 500; }
-  .g-chip.atendendo { border-color: #2d8a4e; color: #2d8a4e; background: #eafaf0; font-weight: 500; }
+    /* Histórico */
+    .history-list { flex:1; overflow-y:auto; padding:14px 20px; }
+    .hist-item { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); opacity:.6; }
+    .hist-item:first-child { opacity:.9; }
+    .hi-code { font-size:1.5rem; font-weight:900; }
+    .hi-info { font-size:.8rem; color:var(--muted); margin-top:1px; }
+    .hi-guiche { font-size:.8rem; font-weight:700; color:var(--primary); background:rgba(255,109,45,.1); padding:4px 12px; border-radius:20px; }
 
-  /* ══════════════════════════════
-     LADO DIREITO — NOTÍCIAS
-  ══════════════════════════════ */
-  .news-side {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: #000;
-  }
+    /* Stats rodapé */
+    .stats-footer { padding:14px 20px; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(3,1fr); gap:10px; flex-shrink:0; background:var(--surface); }
+    .stat-box { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
+    .stat-val { font-size:1.7rem; font-weight:900; color:var(--primary); line-height:1; }
+    .stat-lbl { font-size:.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
 
-  .video-wrap {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .video-wrap iframe {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-
-  /* Notícia em destaque */
-  .news-featured {
-    padding: 1rem 1.25rem;
-    border-bottom: 2px solid #fff3ee;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: background .2s;
-    background: #f5f8ff;
-  }
-  .news-featured:hover { background: #fff3ee; }
-  .news-featured-cat { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 6px; }
-  .news-featured-title { font-size: 17px; font-weight: 700; color: #1a1a1a; line-height: 1.35; margin-bottom: 6px; }
-  .news-featured-desc { font-size: 13px; color: #c04010; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-featured-time { font-size: 11px; color: #888888; margin-top: 6px; font-weight: 500; }
-
-  /* Lista de notícias */
-  .news-list {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-    background: #fff;
-  }
-  .news-scroll {
-    position: absolute;
-    width: 100%;
-    animation: scrollUp 60s linear infinite;
-  }
-  .news-scroll:hover { animation-play-state: paused; }
-
-  .news-item {
-    padding: .85rem 1.25rem;
-    border-bottom: 1px solid #e8eef8;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .news-item:hover { background: #f5f8ff; }
-  .news-item-cat { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #FF6D2D; text-transform: uppercase; margin-bottom: 3px; }
-  .news-item-title { font-size: 14px; color: #1a1a1a; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
-  .news-item-time { font-size: 11px; color: #888888; margin-top: 3px; }
-
-  /* Ticker */
-  .news-ticker {
-    background: #FF6D2D;
-    padding: .45rem 1rem;
-    overflow: hidden;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .news-ticker-inner {
-    display: inline-block;
-    animation: ticker 40s linear infinite;
-    font-size: 13px;
-    font-weight: 600;
-    color: #fff;
-    white-space: nowrap;
-    letter-spacing: .3px;
-  }
-
-  @keyframes scrollUp {
-    0%   { transform: translateY(0); }
-    100% { transform: translateY(-50%); }
-  }
-  @keyframes ticker {
-    0%   { transform: translateX(100vw); }
-    100% { transform: translateX(-100%); }
-  }
-  /* ── Botão ativar som ── */
-  #btn-som {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background: #FF6D2D;
-    color: #fff;
-    border: none;
-    border-radius: 50px;
-    padding: 14px 28px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(255,109,45,0.5);
-    z-index: 999;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: pulsar 1.5s ease-in-out infinite;
-    transition: opacity .5s, transform .5s;
-  }
-  #btn-som.sumindo {
-    opacity: 0;
-    transform: scale(0.8);
-    pointer-events: none;
-  }
-  @keyframes pulsar {
-    0%,100% { box-shadow: 0 4px 20px rgba(255,109,45,0.5); }
-    50%      { box-shadow: 0 4px 35px rgba(255,109,45,0.9); }
-  }
-
-  .news-loading { text-align: center; color: #888888; padding: 2rem; font-size: 14px; }
-
-  /* Notícia em destaque */
-  .news-featured {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #0a1628;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .news-featured:hover { background: #080f20; }
-  .news-featured-cat { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: #378add; text-transform: uppercase; margin-bottom: 6px; }
-  .news-featured-title { font-size: 18px; font-weight: 600; color: #e8f0f8; line-height: 1.35; margin-bottom: 6px; }
-  .news-featured-desc { font-size: 13px; color: #4a7fa8; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-featured-time { font-size: 11px; color: #1e3a6a; margin-top: 6px; }
-
-  /* Lista de notícias */
-  .news-list {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
-  .news-scroll {
-    position: absolute;
-    width: 100%;
-    animation: scrollUp 60s linear infinite;
-  }
-  .news-scroll:hover { animation-play-state: paused; }
-
-  .news-item {
-    padding: .85rem 1.25rem;
-    border-bottom: 1px solid #0a1628;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .news-item:hover { background: #080f20; }
-  .news-item-cat { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: #1e4a7a; text-transform: uppercase; margin-bottom: 3px; }
-  .news-item-title { font-size: 14px; color: #c8d8e8; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .news-item-time { font-size: 11px; color: #1e3a6a; margin-top: 3px; }
-
-  /* Ticker na parte inferior */
-  .news-ticker {
-    background: #378add;
-    padding: .4rem 1rem;
-    overflow: hidden;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .news-ticker-inner {
-    display: inline-block;
-    animation: ticker 40s linear infinite;
-    font-size: 13px;
-    font-weight: 500;
-    color: #fff;
-    white-space: nowrap;
-  }
-
-  @keyframes scrollUp {
-    0%   { transform: translateY(0); }
-    100% { transform: translateY(-50%); }
-  }
-  @keyframes ticker {
-    0%   { transform: translateX(100vw); }
-    100% { transform: translateX(-100%); }
-  }
-  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .new-call { animation: flash .4s ease 3; }
-
-  /* Loading */
-  .news-loading { text-align: center; color: #1e3a6a; padding: 2rem; font-size: 14px; }
-</style>
+    /* Ativar som */
+    .sound-btn { position:fixed; bottom:60px; left:20px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 16px; color:var(--muted); font-size:.8rem; cursor:pointer; transition:all .15s; z-index:10; }
+    .sound-btn:hover { border-color:var(--primary); color:var(--primary); }
+    .sound-btn.active { border-color:var(--green); color:var(--green); }
+  </style>
 </head>
 <body>
 
-<header>
-  <img src="/img/logo-branca.png" alt="Prefeitura de Fortaleza — Regional 6">
-  <div class="hdr-center">
-    <div class="hdr-setor">Acolhimento</div>
+<header class="sga-header">
+  <div class="brand">
+    <img src="/img/logo-branca.png" alt="Prefeitura" onerror="this.style.display='none'"/>
+    <div class="brand-text">
+      <h1>Junta Militar</h1>
+      <p>Prefeitura de Fortaleza · Regional 6</p>
+    </div>
   </div>
-  <div class="hdr-right">
-    <div class="hdr-hora" id="hora">00:00:00</div>
-    <div class="hdr-data" id="data-hoje"></div>
+  <div class="header-right">
+    <div class="clock" id="clock">00:00:00</div>
   </div>
 </header>
 
-<div class="body-wrap">
+<div class="monitor-body">
 
-  <!-- ══ LADO ESQUERDO: SGA ══ -->
-  <div class="sga-side">
-    <div class="setor-label">Senhas</div>
-
-    <div class="call-box" id="call-box">
-      <div class="pref-label" id="call-pref"></div>
-      <div class="call-senha" id="call-senha"><span class="call-idle">Aguardando...</span></div>
-      <div class="call-sep" id="call-sep"></div>
-      <div class="call-guiche" id="call-guiche"></div>
+  <div class="left-panel">
+    <div class="current-call">
+      <div class="current-guiche" id="cur-guiche">Aguardando chamada...</div>
+      <div class="current-ticket" id="cur-ticket">—</div>
+      <div class="current-service" id="cur-service"></div>
     </div>
-
-    <div id="hist-wrap" style="display:none;text-align:center;width:100%">
-      <div class="hist-title mb-1">Chamadas anteriores</div>
-      <div class="hist-list" id="hist-list"></div>
-    </div>
-
-    <div class="guiches-wrap" style="width:100%">
-      <div class="hist-title" style="margin-bottom:.4rem">Guichês</div>
-      <div class="guiches-grid" id="guiches-grid"></div>
+    
+    <div class="marquee-wrap">
+      <span class="marquee-inner">
+         &nbsp; Bem-vindo à Junta Militar da Regional 6 &nbsp;|&nbsp;
+        Alistamento obrigatório para jovens que completam 18 anos &nbsp;|&nbsp;
+        Atendimento de Segunda a Sexta, das 8h às 15h &nbsp;|&nbsp;
+        Prefeitura de Fortaleza · Regional 6 &nbsp;
+      </span>
     </div>
   </div>
 
- 
+  <div class="right-panel">
 
-<div></div>
+    <div class="panel-section">
+      <div class="panel-label">Guichês</div>
+      <div class="guiche-list" id="guiche-list">
+        <div class="guiche-row"><div class="gr-name"><span class="gr-dot dot-free"></span>Guichê 1</div><div class="gr-ticket" id="g1-tk">—</div></div>
+        <div class="guiche-row"><div class="gr-name"><span class="gr-dot dot-free"></span>Guichê 2</div><div class="gr-ticket" id="g2-tk">—</div></div>
+        <div class="guiche-row"><div class="gr-name"><span class="gr-dot dot-free"></span>Guichê 3</div><div class="gr-ticket" id="g3-tk">—</div></div>
+      </div>
+    </div>
+
+    <div class="history-list">
+      <div class="panel-label">Últimas Chamadas</div>
+      <div id="hist-list"><div style="color:var(--muted);font-size:.82rem;text-align:center;padding:20px 0;">Nenhuma chamada ainda</div></div>
+    </div>
+
+    <div class="stats-footer">
+      <div class="stat-box"><div class="stat-val" id="s-waiting">0</div><div class="stat-lbl">Aguardando</div></div>
+      <div class="stat-box"><div class="stat-val" id="s-attended">0</div><div class="stat-lbl">Atendidos</div></div>
+      <div class="stat-box"><div class="stat-val" id="s-avg">—</div><div class="stat-lbl">T. Médio</div></div>
+    </div>
+
+  </div>
 </div>
 
+<button class="sound-btn" id="sound-btn" onclick="toggleSound()">🔊 Toque aqui para ativar o som</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
- console.log("VERSAO DO SISTEMA: 2.0 - TESTE AUDIO");
-  // ── Relógio ──
-  function tick() {
-    const now = new Date();
-    document.getElementById('hora').textContent = now.toLocaleTimeString('pt-BR');
-    const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-    const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-    document.getElementById('data-hoje').textContent =
-      `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]} de ${now.getFullYear()}`;
+const { createClient } = supabase;
+const _supabase = createClient(
+  'https://hlhqasccfrikbfwwyvym.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsaHFhc2NjZnJpa2Jmd3d5dnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxODAwMTUsImV4cCI6MjA5NDc1NjAxNX0.fNyhH-yJbsutybPoFxWR3Kv8ks9hR91WQLmxu7JjzKQ'
+);
+
+// Relógio com segundos
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toTimeString().slice(0,8);
+},1000);
+
+// Som
+let soundEnabled = false;
+function toggleSound() {
+  soundEnabled = true;
+  const btn = document.getElementById('sound-btn');
+  btn.textContent = '🔊 Som ativado';
+  btn.classList.add('active');
+  setTimeout(()=>btn.style.display='none', 2000);
+}
+
+function falarSenha(code, guiche) {
+  if (!soundEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  const letra = code.charAt(0);
+  const num   = code.slice(1).split('').join(' ');
+  const u = new SpeechSynthesisUtterance(
+    `Senha ${letra} ${num}, por favor dirija-se ao ${guiche}`
+  );
+  u.lang  = 'pt-BR';
+  u.rate  = 0.88;
+  const voices = speechSynthesis.getVoices();
+  const pt = voices.find(v => v.lang.startsWith('pt'));
+  if (pt) u.voice = pt;
+  speechSynthesis.speak(u);
+}
+
+// Histórico local
+const hist = [];
+let attendedCount = 0;
+
+function handleNewCall(c) {
+  const code    = c.ticket_code;
+  const service = c.service_label;
+  const guiche  = 'Guichê ' + c.guiche_id;
+  const time    = new Date(c.called_at || Date.now()).toTimeString().slice(0,5);
+
+  // Atualiza chamada atual
+  const el = document.getElementById('cur-ticket');
+  el.textContent = code;
+  el.classList.remove('animate-in');
+  void el.offsetWidth;
+  el.classList.add('animate-in');
+
+  document.getElementById('cur-guiche').textContent  = guiche;
+  document.getElementById('cur-service').textContent = service;
+  
+  // Cor preferencial
+  const isPref = code.startsWith('P');
+  document.getElementById('cur-ticket').style.color = isPref ? '#f59e0b' : 'var(--primary)';
+
+  // Histórico
+  hist.unshift({ code, service, guiche, time });
+  attendedCount++;
+  renderHist();
+  updateStats();
+
+  // Voz
+  falarSenha(code, guiche);
+}
+
+function renderHist() {
+  const el = document.getElementById('hist-list');
+  if (!hist.length) return;
+  el.innerHTML = hist.slice(0,12).map(h => {
+    const isPref = h.code.startsWith('P');
+    return `<div class="hist-item">
+      <div>
+        <div class="hi-code" style="${isPref?'color:#f59e0b':''}">${h.code}</div>
+        <div class="hi-info">${h.service} · ${h.time}</div>
+      </div>
+      <div class="hi-guiche">${h.guiche}</div>
+    </div>`;
+  }).join('');
+}
+
+// Stats
+async function updateStats() {
+  const today = new Date().toISOString().slice(0,10);
+  const { count: w } = await _supabase.from('tickets')
+    .select('id',{count:'exact',head:true}).eq('status','waiting').eq('date',today);
+  document.getElementById('s-waiting').textContent  = w ?? 0;
+  document.getElementById('s-attended').textContent = attendedCount;
+}
+
+// Guichês
+async function loadGuiches() {
+  const { data } = await _supabase.from('guiches').select('id,status,current_ticket_id').order('id');
+  if (!data) return;
+  for (const g of data) {
+    const row = document.querySelector(`#guiche-list .guiche-row:nth-child(${g.id})`);
+    if (!row) continue;
+    const dot = row.querySelector('.gr-dot');
+    dot.className = 'gr-dot dot-' + g.status;
+    row.className = 'guiche-row' + (g.status==='busy'?' busy':'');
+    if (g.status === 'busy' && g.current_ticket_id) {
+      const { data:tk } = await _supabase.from('tickets').select('code').eq('id',g.current_ticket_id).single();
+      if (tk) document.getElementById('g'+g.id+'-tk').textContent = tk.code;
+    } else {
+      document.getElementById('g'+g.id+'-tk').textContent = '—';
+    }
   }
-  tick(); setInterval(tick, 1000);
-
-// ── Sistema de Som e Voz ─────────────────────────────────────────────────────
-// Variável global para o contexto de áudio
-let audioCtx = null;
-
-function falarChamada(num, guiche, pref) {
-    let playlist = ['bipe'];
-    
-    if (pref === true || pref === "true" || pref === 1) {
-        playlist.push('preferencial');
-    }
-    playlist.push('senha');
-
-    // Trata a SENHA — remove prefixo de letra (P, N, etc) e mantém só os dígitos
-    let s = String(num).replace(/^[a-zA-Z]+/, ''); // remove só letras do início (ex: "P001" → "001")
-    s = s.replace(/\D/g, ''); // remove qualquer outro não-dígito
-    if (!s) s = '0';
-    for (let char of s) {
-        playlist.push(char);
-    }
-
-    playlist.push('guiche');
-
-    // Trata o GUICHÊ — pega APENAS o primeiro número após "Guichê "
-    // ex: "Guichê 5 (Roque)" → "5"
-    // ex: "Guichê 5 · 014 (Laura)" → "5"
-    let gMatch = String(guiche).match(/\d+/); // pega o PRIMEIRO número
-    let g = gMatch ? gMatch[0] : '0';
-    // Remove zeros à esquerda do guichê
-    g = parseInt(g, 10).toString();
-    for (let char of g) {
-        playlist.push(char);
-    }
-
-    tocarSequencia(playlist);
 }
+loadGuiches();
 
-async function tocarSequencia(lista) {
-    for (const item of lista) {
-        console.log("Tocando:", item);
-        await new Promise((resolve) => {
-            const som = new Audio(`/sons/${item}.mp3`);
-            som.playbackRate = 1.4;
-            som.onended = () => {
-                resolve();
-            };
-            som.onerror = () => {
-                console.error("Erro ao tocar:", item);
-                resolve();
-            };
-            som.play().catch((err) => {
-                console.error("Falha:", item, err);
-                resolve();
-            });
-        });
+// Realtime: novas chamadas
+_supabase.channel('monitor-calls')
+  .on('postgres_changes',{event:'INSERT',schema:'public',table:'calls'}, p => handleNewCall(p.new))
+  .subscribe();
+
+// Realtime: guichês
+_supabase.channel('monitor-guiches')
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'guiches'}, () => loadGuiches())
+  .subscribe();
+
+// Carrega histórico do dia
+(async () => {
+  const today = new Date().toISOString().slice(0,10);
+  const { data } = await _supabase.from('calls')
+    .select('ticket_code,service_label,guiche_id,called_at')
+    .eq('date',today).order('called_at',{ascending:false}).limit(12);
+  if (data) {
+    data.forEach(c => hist.push({
+      code: c.ticket_code, service: c.service_label,
+      guiche: 'Guichê '+c.guiche_id,
+      time: new Date(c.called_at).toTimeString().slice(0,5)
+    }));
+    attendedCount = data.length;
+    if (data.length) {
+      const last = data[0];
+      document.getElementById('cur-ticket').textContent  = last.ticket_code;
+      document.getElementById('cur-service').textContent = last.service_label;
+      document.getElementById('cur-guiche').textContent  = 'Guichê '+last.guiche_id;
     }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-
-
-
-
- 
-
-// Função auxiliar para garantir que o vídeo volte a tocar
-
-  // ────────────────────────────────────────────────────────────────────────────
-
-  // ── SGA Realtime ──
-  let historico = [];
-
-  SGA.on('estado_inicial', d => renderGuiches(d.guiches || []));
-
-  SGA.on('nova_chamada', c => {
-    falarChamada(c.num, c.nomeGuiche, c.preferencial); // 🔊 fala a senha
-    mostrarChamada(c, true);
-    historico.unshift(c);
-    if (historico.length > 4) historico.pop();
-    renderHistorico(historico.slice(1));
-  });
-
-  SGA.on('guiches_atualizados', () => {
-    fetch('/api/estado').then(r=>r.json()).then(d => renderGuiches(d.guiches || []));
-  });
-
-  SGA.on('fila_resetada', () => {
-    historico = [];
-    document.getElementById('call-senha').innerHTML = '<span class="call-idle">Aguardando...</span>';
-    document.getElementById('call-pref').textContent = '';
-    document.getElementById('call-guiche').textContent = '';
-    document.getElementById('call-sep').style.display = 'none';
-    document.getElementById('call-box').className = 'call-box';
-    document.getElementById('hist-wrap').style.display = 'none';
-  });
-
-  function mostrarChamada(c, animar) {
-    const box = document.getElementById('call-box');
-    box.className = 'call-box' + (c.preferencial?' pref':'') + (animar?' new-call':'');
-    document.getElementById('call-pref').textContent = c.preferencial ? '★ Atendimento Preferencial' : '';
-    document.getElementById('call-senha').textContent = 'Senha ' + c.num;
-    document.getElementById('call-sep').style.display = 'block';
-    document.getElementById('call-guiche').textContent = c.nomeGuiche;
-  }
-
-  function renderHistorico(hist) {
-    const wrap = document.getElementById('hist-wrap');
-    const list = document.getElementById('hist-list');
-    if (!hist.length) { wrap.style.display='none'; return; }
-    wrap.style.display = 'block';
-    list.innerHTML = hist.map(h =>
-      `<div class="hist-item${h.preferencial?' pref':''}">Senha ${h.num} → ${h.nomeGuiche}</div>`
-    ).join('');
-  }
-
-  function renderGuiches(guiches) {
-    document.getElementById('guiches-grid').innerHTML = guiches.map(g => {
-      let cls='g-chip';
-      let label=g.nome;
-      if(g.senha_atual){cls+=' atendendo';label+=` · ${g.senha_atual}`;}
-      else if(g.ativo){cls+=' ativo';}
-      return `<div class="${cls}">${label}${g.atendente?' ('+g.atendente+')':''}</div>`;
-    }).join('');
-  }
-
-  // ── Player de Vídeos em Loop ──────────────────────────────────────────────
-
-  // ────────────────────────────────────────────────────────────────────────────
-
-  // ── Botão ativar som ──────────────────────────────────────────────────────
-  function ativarSom() {
-    // Ativa AudioContext
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    // Ativa vídeo com som
-
-    // Desbloqueia Audio via MP3 silencioso
-    const unlock = new Audio("/sons/bipe.mp3");
-    unlock.volume = 0.01;
-    unlock.play().catch(() => {});
-    console.log("[Som] Áudio ativado — pronto para chamadas");
-
-
-    // Esconde o botão
-    const btn = document.getElementById('btn-som');
-    btn.classList.add('sumindo');
-    setTimeout(() => btn.style.display = 'none', 600);
-  }
-
-  // Esconde automaticamente após 15 segundos se não clicar
-  setTimeout(() => {
-    const btn = document.getElementById('btn-som');
-    if (btn && !btn.classList.contains('sumindo')) {
-      btn.classList.add('sumindo');
-      setTimeout(() => btn.style.display = 'none', 600);
-    }
-  }, 15000);
-  // ────────────────────────────────────────────────────────────────────────────
-
-  // ── Inicialização ──
-  SGA.iniciarRealtime();
-  SGA.carregarEstado();
+    renderHist();
+    updateStats();
+  }
+})();
 </script>
-<!-- Botão ativar som -->
-<button id="btn-som" onclick="ativarSom()">🔊 Toque aqui para ativar o som</button>
-
 </body>
 </html>
