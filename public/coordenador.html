@@ -412,12 +412,22 @@
     document.getElementById('ch-ul-pref').textContent    = c.preferencial?'★ PREFERENCIAL':'';
     document.getElementById('ch-ul-num').textContent     = 'Senha '+c.num;
     document.getElementById('ch-ul-guiche').textContent  = c.nomeGuiche;
-    document.getElementById('ch-ul-hora').textContent    = c.hora;
+    // Converte o horário do servidor (UTC) para Fortaleza (UTC-3)
+    const [h, m, s] = c.hora.split(':').map(Number);
+    const dataUTC = new Date();
+    dataUTC.setUTCHours(h, m, s || 0);
+    const horaFortaleza = dataUTC.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
+    document.getElementById('ch-ul-hora').textContent = horaFortaleza;
     const hbox=document.getElementById('ch-hist-box'), hlist=document.getElementById('ch-hist-list');
     hbox.style.display='block';
     const row=document.createElement('div');
     row.className='hist-row';
-    row.innerHTML=`<span><strong>${c.num}</strong>${c.preferencial?' <span class="badge badge-amber" style="font-size:10px">Pref</span>':''} → ${c.nomeGuiche}</span><span class="text-muted">${c.hora}</span>`;
+   function converterHora(horaUTC) {
+    const [h, m, s] = horaUTC.split(':').map(Number);
+    const d = new Date();
+    d.setUTCHours(h, m, s || 0);
+    return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
+    } 
     hlist.prepend(row);
     if(hlist.children.length>6) hlist.lastChild.remove();
   }
