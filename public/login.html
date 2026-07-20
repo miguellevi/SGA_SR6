@@ -65,8 +65,7 @@
       localStorage.setItem('sga_token',  res.token);
       localStorage.setItem('sga_perfil', res.perfil);
       localStorage.setItem('sga_nome',   res.nome);
-      const irPara = (res.perfil === 'coordenador' || res.perfil === 'acolhimento') ? '/coordenador' : '/operador';
-        window.location.href = irPara;
+      window.location.href = res.perfil === 'coordenador' ? '/coordenador' : '/operador';
     } else {
       mostrarErro(res.erro || 'Erro ao entrar');
     }

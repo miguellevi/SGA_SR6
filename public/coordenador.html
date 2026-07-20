@@ -77,7 +77,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:760px">
       <div>
         <!-- Numeração -->
-        <div class="card mb-2" id="card-numeracao">
+        <div class="card mb-2">
           <div class="card-title">Numeração das senhas</div>
           <div class="ch-num-box">
             Próxima Normal: <strong id="prox-normal" style="color:var(--blue)">—</strong>
@@ -220,7 +220,7 @@
     <div class="form-group"><label>Login</label><input type="text" id="u-login" placeholder="login"></div>
     <div class="form-group"><label>Senha</label><input type="password" id="u-senha" placeholder="Senha inicial"></div>
     <div class="form-group"><label>Perfil</label>
-      <select id="u-perfil"><option value="atendente">Atendente</option><option value="acolhimento">Acolhimento (Coringa)</option><option value="coordenador">Coordenador</option></select>
+      <select id="u-perfil"><option value="atendente">Atendente</option><option value="coordenador">Coordenador</option></select>
     </div>
     <div id="modal-u-erro" class="alert alert-error" style="display:none"></div>
     <div class="flex gap-1 mt-2">
@@ -245,21 +245,7 @@
 </div>
 
 <script>
-  if (!SGA.token || (SGA.perfil !== 'coordenador' && SGA.perfil !== 'acolhimento')) window.location.href = '/login';
-  
-  // Esconde abas restritas para perfil acolhimento
-  if (!isCoordCompleto) {
-    // Esconde Usuários e Tipos de Senha
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      const tab = btn.getAttribute('onclick') || '';
-      if (tab.includes('usuarios') || tab.includes('tipos')) {
-        btn.style.display = 'none';
-      }
-    });
-    // Esconde configuração de numeração
-    const numCard = document.getElementById('card-numeracao');
-    if (numCard) numCard.style.display = 'none';
-  }
+  if (!SGA.token || SGA.perfil !== 'coordenador') window.location.href = '/login';
   document.getElementById('nome-coord').textContent = SGA.nome;
 
   let guichesData = [], relatorioData = [];
@@ -654,7 +640,7 @@
       <tr>
         <td><strong>${u.nome}</strong></td>
         <td>${u.login}</td>
-        <td><span class="badge ${u.perfil==='coordenador'?'badge-blue':u.perfil==='acolhimento'?'badge-amber':'badge-gray'}">${u.perfil}</span></td>
+        <td><span class="badge ${u.perfil==='coordenador'?'badge-blue':'badge-gray'}">${u.perfil}</span></td>
         <td>${u.perfil!=='coordenador'?`<button class="btn btn-sm btn-danger" onclick="removerUsuario(${u.id})">Remover</button>`:''}</td>
       </tr>`).join('');
   }
