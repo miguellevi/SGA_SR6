@@ -8,15 +8,24 @@ module.exports = async function handler(req, res) {
     if (!login || !senha) return res.json({ ok: false, erro: 'Login e senha obrigatórios' });
 
     const email = `${login.toLowerCase().trim()}@sga.local`;
+    console.log('[login] tentativa:', email);
 
+    // 1. Autentica no Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    if (error || !data?.user) return res.json({ ok: false, erro: 'Login ou senha incorretos' });
+    if (error || !data?.user) {
+      console.log('[login] auth falhou:', error?.message);
+      return res.json({ ok: false, erro: 'Login ou senha incorretos' });
+    }
+    console.log('[login] auth ok, auth_id:', data.user.id);
 
+    // 2. Busca perfil na tabela usuarios
     const { data: perfil, error: errPerfil } = await supabase
       .from('usuarios')
       .select('perfil, nome')
       .eq('auth_id', data.user.id)
       .single();
+
+    console.log('[login] perfil encontrado:', JSON.stringify(perfil), 'erro:', errPerfil?.message);
 
     if (errPerfil || !perfil) {
       return res.json({
@@ -24,6 +33,8 @@ module.exports = async function handler(req, res) {
         erro: `Usuário autenticado mas sem perfil na tabela usuarios. auth_id: ${data.user.id}`
       });
     }
+
+    console.log('[login] sucesso, perfil:', perfil.perfil);
 
     return res.json({
       ok: true,
@@ -33,7 +44,7 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (e) {
-    console.error('Erro login:', e.message);
+    console.error('[login] erro inesperado:', e.message);
     return res.status(500).json({ ok: false, erro: 'Erro interno: ' + e.message });
   }
 };

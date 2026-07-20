@@ -18,15 +18,6 @@ async function verificarAuth(req) {
 }
 
 function somenteCoord(usuario, res) {
-  if (!usuario || (usuario.perfil !== 'coordenador' && usuario.perfil !== 'acolhimento')) {
-    res.status(403).json({ erro: 'Acesso restrito ao Coordenador' });
-    return false;
-  }
-  return true;
-}
-
-// Verifica se é coordenador COMPLETO (acesso total)
-function somenteCoordCompleto(usuario, res) {
   if (!usuario || usuario.perfil !== 'coordenador') {
     res.status(403).json({ erro: 'Acesso restrito ao Coordenador' });
     return false;
@@ -34,4 +25,4 @@ function somenteCoordCompleto(usuario, res) {
   return true;
 }
 
-module.exports = { verificarAuth, somenteCoord, somenteCoordCompleto };
+module.exports = { verificarAuth, somenteCoord };
