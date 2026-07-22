@@ -4,223 +4,460 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Coordenador — Acolhimento</title>
-<link rel="stylesheet" href="/css/style.css">
 <script src="/api/env"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/sga.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  .top-bar{background:var(--white);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-  .top-bar img{height:38px}
-  .content{max-width:960px;margin:0 auto;padding:1.5rem}
-  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
-  .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center}
-  .stat-num{font-size:32px;font-weight:700;color:var(--blue)}
-  .stat-label{font-size:12px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
-  @media(max-width:640px){.stats-grid{grid-template-columns:1fr 1fr}}
+/* ── Reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#FF6D2D; --primary-dark:#e05500; --primary-light:#fff3ee;
+  --blue:#185FA5; --blue-light:#e8f1fb;
+  --amber:#854F0B; --amber-light:#faeeda;
+  --green:#2d8a4e; --green-light:#eafaf0;
+  --red:#A32D2D; --red-light:#FCEBEB;
+  --gray:#5F5E5A; --gray-light:#F1EFE8;
+  --sidebar-w:240px;
+  --sidebar-bg:#1a1a2e;
+  --sidebar-hover:#16213e;
+  --sidebar-active:#FF6D2D;
+  --text:#1a1a18; --text-muted:#6b6a65;
+  --border:#e2e0d8; --bg:#f5f4f0; --white:#fff;
+  --radius:10px; --radius-sm:6px;
+  --shadow:0 1px 4px rgba(0,0,0,.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;display:flex;min-height:100vh}
 
-  .guiches-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.5rem}
-  .guiche-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1rem}
-  .guiche-card.ativo{border-left:3px solid var(--blue-mid)}
-  .guiche-card.atendendo{border-left:3px solid #3B6D11}
-  .g-nome{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
-  .g-editar{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px}
-  .g-atendente{font-size:13px;color:var(--text-muted);margin:4px 0}
-  .g-senha{font-size:16px;font-weight:600;color:var(--blue);min-height:24px}
-  .g-senha.pref{color:var(--amber)}
-  .inline-edit{display:none;gap:6px;align-items:center;margin-top:4px}
-  .inline-edit input{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;width:130px}
-  @media(max-width:640px){.guiches-grid{grid-template-columns:1fr 1fr}}
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sidebar-w);background:var(--sidebar-bg);
+  display:flex;flex-direction:column;flex-shrink:0;
+  position:fixed;top:0;left:0;height:100vh;z-index:100;
+  transition:transform .25s;
+}
+.sidebar-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo img{width:100%;max-width:180px;display:block}
+.sidebar-setor{font-size:11px;font-weight:700;color:var(--primary);letter-spacing:2px;text-transform:uppercase;margin-top:8px;padding-left:2px}
+.sidebar-user{padding:.75rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:.6rem}
+.sidebar-user .avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.sidebar-user .info .nome{font-size:13px;font-weight:600;color:#fff}
+.sidebar-user .info .perfil{font-size:11px;color:rgba(255,255,255,.45);text-transform:capitalize}
 
-  .rel-filters{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
-  .rel-filters input{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px}
+.sidebar-nav{flex:1;padding:.75rem 0;overflow-y:auto}
+.nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase;padding:.5rem 1rem .25rem}
+.nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;color:rgba(255,255,255,.6);font-size:14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;user-select:none}
+.nav-item:hover{background:var(--sidebar-hover);color:#fff}
+.nav-item.active{background:rgba(255,109,45,.15);color:var(--primary);border-left-color:var(--primary);font-weight:600}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.nav-item .badge-nav{margin-left:auto;background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;min-width:20px;text-align:center}
 
-  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
-  .modal-bg.open{display:flex}
-  .modal{background:var(--white);border-radius:var(--radius);padding:1.5rem;width:100%;max-width:400px}
-  .modal h3{font-size:16px;font-weight:600;margin-bottom:1.25rem}
+.sidebar-footer{padding:.75rem 1rem;border-top:1px solid rgba(255,255,255,.08);display:flex;gap:.5rem;flex-direction:column}
+.btn-sidebar{display:flex;align-items:center;gap:.6rem;padding:.6rem .75rem;border-radius:var(--radius-sm);border:none;background:transparent;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;transition:all .15s;width:100%;text-align:left}
+.btn-sidebar:hover{background:rgba(255,255,255,.08);color:#fff}
+.btn-sidebar.danger:hover{background:rgba(163,45,45,.2);color:#f87171}
 
-  /* Chamar senha */
-  .ch-num-box{background:var(--bg);border-radius:var(--radius-sm);padding:.75rem;margin-bottom:1rem;font-size:13px;color:var(--text-muted)}
+/* ── Main ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:var(--shadow)}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text)}
+.topbar-title span{color:var(--primary)}
+.topbar-actions{display:flex;align-items:center;gap:.75rem}
+.content{padding:1.5rem;flex:1}
+
+/* ── Stats cards ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:1.1rem 1.25rem;box-shadow:var(--shadow);display:flex;align-items:center;gap:1rem;border-left:4px solid transparent;transition:transform .15s}
+.stat-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.stat-card.normal{border-left-color:var(--blue)}
+.stat-card.pref{border-left-color:var(--amber)}
+.stat-card.hoje{border-left-color:var(--green)}
+.stat-card.ativos{border-left-color:var(--primary)}
+.stat-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.stat-card.normal .stat-icon{background:var(--blue-light)}
+.stat-card.pref .stat-icon{background:var(--amber-light)}
+.stat-card.hoje .stat-icon{background:var(--green-light)}
+.stat-card.ativos .stat-icon{background:var(--primary-light)}
+.stat-num{font-size:28px;font-weight:700;line-height:1}
+.stat-card.normal .stat-num{color:var(--blue)}
+.stat-card.pref .stat-num{color:var(--amber)}
+.stat-card.hoje .stat-num{color:var(--green)}
+.stat-card.ativos .stat-num{color:var(--primary)}
+.stat-label{font-size:12px;color:var(--text-muted);margin-top:2px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Cards ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow)}
+.card-title{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.75px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.card-title::before{content:'';width:3px;height:14px;background:var(--primary);border-radius:2px;display:inline-block}
+
+/* ── Panes ── */
+.pane{display:none}.pane.active{display:block}
+
+/* ── Grid de guichês ── */
+.guiches-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.guiche-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow);transition:all .15s}
+.guiche-card.ativo{border-left:3px solid var(--blue)}
+.guiche-card.atendendo{border-left:3px solid var(--green);box-shadow:0 2px 10px rgba(45,138,78,.1)}
+.g-nome{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.g-editar{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;opacity:.6;transition:opacity .15s}
+.g-editar:hover{opacity:1}
+.g-atendente{font-size:12px;color:var(--text-muted);margin-bottom:6px;min-height:18px}
+.g-senha{font-size:18px;font-weight:700;color:var(--blue);min-height:26px}
+.g-senha.pref{color:var(--amber)}
+.inline-edit{display:none;gap:6px;align-items:center;margin-top:4px}
+.inline-edit input{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;width:130px}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-top:6px}
+.status-badge.atendendo{background:var(--green-light);color:var(--green)}
+.status-badge.ativo{background:var(--blue-light);color:var(--blue)}
+.status-badge.inativo{background:var(--gray-light);color:var(--gray)}
+
+/* ── Chamar senha layout ── */
+.chamar-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.fila-mini{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
+.fila-box{text-align:center;padding:.85rem;border-radius:var(--radius-sm)}
+.fila-box.normal{background:var(--blue-light)}
+.fila-box.pref{background:var(--amber-light)}
+.fila-num{font-size:32px;font-weight:800;line-height:1}
+.fila-box.normal .fila-num{color:var(--blue)}
+.fila-box.pref .fila-num{color:var(--amber)}
+.fila-lbl{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* Última chamada */
+.ultima-chamada{text-align:center;padding:1rem 0}
+.uc-pref{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--amber);text-transform:uppercase;min-height:18px;margin-bottom:6px}
+.uc-num{font-size:40px;font-weight:800;color:var(--text);line-height:1}
+.uc-guiche{font-size:16px;color:var(--blue);margin-top:4px;font-weight:600}
+.uc-hora{font-size:12px;color:var(--text-muted);margin-top:4px}
+
+/* Histórico */
+.hist-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--gray-light);font-size:13px}
+.hist-row:last-child{border-bottom:none}
+
+/* ── Numeração ── */
+.num-display{background:var(--bg);border-radius:var(--radius-sm);padding:.65rem 1rem;font-size:13px;color:var(--text-muted);margin-bottom:1rem;text-align:center}
+
+/* ── Botões ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);color:var(--text);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:hover{background:var(--gray-light)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-primary:hover{background:var(--primary-dark)}
+.btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-blue:hover{background:#135090}
+.btn-danger{background:var(--red-light);color:var(--red);border-color:#f7c1c1}
+.btn-sm{padding:5px 11px;font-size:13px}.btn-full{width:100%}
+
+/* ── Formulários ── */
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-muted);margin-bottom:5px}
+.form-group input,.form-group select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--white);color:var(--text);outline:none;transition:border .15s}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary)}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-amber{background:var(--amber-light);color:var(--amber)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-gray{background:var(--gray-light);color:var(--gray)}
+.badge-orange{background:var(--primary-light);color:var(--primary)}
+
+/* ── Tabelas ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--text-muted);border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.5px;background:var(--bg)}
+td{padding:11px 14px;border-bottom:1px solid var(--gray-light)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+
+/* ── Relatório ── */
+.periodo-btns{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem}
+.rel-filters{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.rel-filters input{padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;flex:1;min-width:200px}
+#rel-resumo{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.resumo-pill{padding:.5rem 1rem;border-radius:var(--radius-sm);font-size:13px}
+
+/* ── Alertas ── */
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:1rem}
+.alert-error{background:var(--red-light);color:var(--red);border:1px solid #f7c1c1}
+.alert-success{background:var(--green-light);color:var(--green);border:1px solid #c0dd97}
+
+/* ── Modal ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radius);padding:1.75rem;width:100%;max-width:420px;box-shadow:var(--shadow-md)}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:1.25rem;color:var(--text)}
+
+/* ── Utils ── */
+.mb-1{margin-bottom:.5rem}.mb-2{margin-bottom:1rem}.mb-3{margin-bottom:1.5rem}
+.mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}
+.flex{display:flex}.flex-between{display:flex;align-items:center;justify-content:space-between}
+.flex-center{display:flex;align-items:center}.gap-1{gap:.5rem}.gap-2{gap:1rem}
+.text-muted{color:var(--text-muted)}.text-center{text-align:center}
+
+/* ── Responsive ── */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .chamar-grid{grid-template-columns:1fr}
+  .guiches-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .guiches-grid{grid-template-columns:1fr}
+  .topbar{padding:.75rem 1rem}
+  .content{padding:1rem}
+}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:.25rem;color:var(--text)}
+@media(max-width:640px){.hamburger{display:block}}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99}
+.overlay.open{display:block}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <img src="/img/logo-colorida.png" alt="Prefeitura de Fortaleza — Regional 6">
-  <div style="display:flex;align-items:center;gap:.75rem">
-    <span style="font-size:13px;color:var(--text-muted)" id="nome-coord"></span>
-    <button class="btn btn-sm" onclick="atualizarTudo()">🔄 Atualizar</button>
-    <button class="btn btn-sm btn-danger" onclick="resetarFila()">🔄 Resetar fila</button>
-    <button class="btn btn-sm" onclick="sair()">Sair</button>
-  </div>
-</div>
+<!-- Overlay mobile -->
+<div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
 
-<div class="content">
-  <div class="stats-grid">
-    <div class="stat-card"><div class="stat-num" id="st-normal">0</div><div class="stat-label">Fila Normal</div></div>
-    <div class="stat-card"><div class="stat-num" id="st-pref">0</div><div class="stat-label">Fila Pref.</div></div>
-    <div class="stat-card"><div class="stat-num" id="st-hoje">0</div><div class="stat-label">Atendidos hoje</div></div>
-    <div class="stat-card"><div class="stat-num" id="st-ativos">0</div><div class="stat-label">Guichês ativos</div></div>
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <img src="/img/logo-branca.png" alt="Prefeitura de Fortaleza">
+    <div class="sidebar-setor">Acolhimento</div>
   </div>
 
-  <div class="tabs-nav">
-    <button class="tab-btn active" onclick="mudarTab('chamar',this)">Chamar Senha</button>
-    <button class="tab-btn" onclick="mudarTab('guiches',this)">Guichês</button>
-    <button class="tab-btn" onclick="mudarTab('relatorio',this)">Relatório</button>
-    <button class="tab-btn" onclick="mudarTab('usuarios',this)">Usuários</button>
-    <button class="tab-btn" onclick="mudarTab('tipos',this)">Tipos de Senha</button>
+  <div class="sidebar-user">
+    <div class="avatar" id="avatar-inicial">C</div>
+    <div class="info">
+      <div class="nome" id="nome-coord">Carregando...</div>
+      <div class="perfil" id="perfil-label">coordenador</div>
+    </div>
   </div>
 
-  <!-- Chamar Senha -->
-  <div class="tab-pane active" id="tab-chamar">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:760px">
-      <div>
-        <!-- Numeração -->
-        <div class="card mb-2">
-          <div class="card-title">Numeração das senhas</div>
-          <div class="ch-num-box">
-            Próxima Normal: <strong id="prox-normal" style="color:var(--blue)">—</strong>
-            &nbsp;|&nbsp;
-            Próxima Pref.: <strong id="prox-pref" style="color:var(--amber)">—</strong>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
-            <div class="form-group" style="margin:0">
-              <label>Início Normal</label>
-              <input type="number" id="ini-normal" min="0" placeholder="Ex: 11" style="text-align:center;font-size:16px;font-weight:600">
+  <nav class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="mudarPane('chamar', this)">
+      <span class="icon">🎯</span> Chamar Senha
+      <span class="badge-nav" id="badge-fila" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="mudarPane('guiches', this)">
+      <span class="icon">🖥️</span> Guichês
+    </div>
+
+    <div class="nav-section">Dados</div>
+    <div class="nav-item" onclick="mudarPane('relatorio', this)">
+      <span class="icon">📊</span> Relatório
+    </div>
+
+    <div class="nav-section" id="nav-section-admin">Administração</div>
+    <div class="nav-item" id="nav-usuarios" onclick="mudarPane('usuarios', this)">
+      <span class="icon">👥</span> Usuários
+    </div>
+    <div class="nav-item" id="nav-tipos" onclick="mudarPane('tipos', this)">
+      <span class="icon">🏷️</span> Tipos de Senha
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <button class="btn-sidebar" onclick="atualizarTudo()">🔄 Atualizar dados</button>
+    <button class="btn-sidebar danger" onclick="resetarFila()">⚠️ Resetar fila</button>
+    <button class="btn-sidebar" onclick="sair()">← Sair</button>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <button class="hamburger" onclick="abrirSidebar()">☰</button>
+      <div class="topbar-title" id="topbar-title">Chamar <span>Senha</span></div>
+    </div>
+    <div class="topbar-actions">
+      <span style="font-size:12px;color:var(--text-muted)" id="topbar-data"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card normal">
+        <div class="stat-icon">📋</div>
+        <div><div class="stat-num" id="st-normal">0</div><div class="stat-label">Fila Normal</div></div>
+      </div>
+      <div class="stat-card pref">
+        <div class="stat-icon">⭐</div>
+        <div><div class="stat-num" id="st-pref">0</div><div class="stat-label">Fila Pref.</div></div>
+      </div>
+      <div class="stat-card hoje">
+        <div class="stat-icon">✅</div>
+        <div><div class="stat-num" id="st-hoje">0</div><div class="stat-label">Atendidos hoje</div></div>
+      </div>
+      <div class="stat-card ativos">
+        <div class="stat-icon">🖥️</div>
+        <div><div class="stat-num" id="st-ativos">0</div><div class="stat-label">Guichês ativos</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ CHAMAR SENHA ═══ -->
+    <div class="pane active" id="pane-chamar">
+      <div class="chamar-grid">
+
+        <!-- Coluna esquerda -->
+        <div>
+          <!-- Numeração -->
+          <div class="card mb-2" id="card-numeracao">
+            <div class="card-title">Numeração das senhas</div>
+            <div class="num-display">
+              Próxima Normal: <strong id="prox-normal" style="color:var(--blue)">—</strong>
+              &nbsp;|&nbsp;
+              Próxima Pref.: <strong id="prox-pref" style="color:var(--amber)">—</strong>
             </div>
-            <div class="form-group" style="margin:0">
-              <label>Início Preferencial</label>
-              <input type="number" id="ini-pref" min="0" placeholder="Ex: 5" style="text-align:center;font-size:16px;font-weight:600">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+              <div class="form-group" style="margin:0">
+                <label>Início Normal</label>
+                <input type="number" id="ini-normal" min="0" placeholder="Ex: 11" style="text-align:center;font-size:18px;font-weight:700">
+              </div>
+              <div class="form-group" style="margin:0">
+                <label>Início Preferencial</label>
+                <input type="number" id="ini-pref" min="0" placeholder="Ex: 5" style="text-align:center;font-size:18px;font-weight:700">
+              </div>
+            </div>
+            <button class="btn btn-full" onclick="definirContador()" style="font-size:13px">Aplicar numeração</button>
+            <div id="contador-msg" style="font-size:12px;margin-top:6px;min-height:16px;text-align:center"></div>
+          </div>
+
+          <!-- Fila + Chamar -->
+          <div class="card">
+            <div class="card-title">Fila de espera</div>
+            <div class="fila-mini">
+              <div class="fila-box normal">
+                <div class="fila-num" id="ch-normal">0</div>
+                <div class="fila-lbl">Normal</div>
+              </div>
+              <div class="fila-box pref">
+                <div class="fila-num" id="ch-pref">0</div>
+                <div class="fila-lbl">Preferencial</div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:.75rem">
+              <label>Guichê destino</label>
+              <select id="ch-guiche-sel"><option value="">— Escolha um guichê —</option></select>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-ch-chamar" onclick="coordChamar()" style="padding:13px;font-size:15px;font-weight:600" disabled>
+              🎯 Chamar próxima senha
+            </button>
+            <div id="ch-erro" class="alert alert-error mt-1" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Coluna direita -->
+        <div>
+          <div class="card mb-2" id="ch-ultima-box" style="display:none">
+            <div class="card-title">Última chamada</div>
+            <div class="ultima-chamada">
+              <div class="uc-pref" id="ch-ul-pref"></div>
+              <div class="uc-num"  id="ch-ul-num"></div>
+              <div class="uc-guiche" id="ch-ul-guiche"></div>
+              <div class="uc-hora"   id="ch-ul-hora"></div>
             </div>
           </div>
-          <button class="btn btn-full" onclick="definirContador()" style="font-size:13px">Aplicar numeração</button>
-          <div id="contador-msg" style="font-size:12px;margin-top:6px;min-height:16px;text-align:center"></div>
-        </div>
-        <!-- Fila + Chamar -->
-        <div class="card mb-2">
-          <div class="card-title">Fila de espera</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem">
-            <div style="text-align:center;padding:.75rem;background:var(--blue-light);border-radius:var(--radius-sm)">
-              <div style="font-size:28px;font-weight:700;color:var(--blue)" id="ch-normal">0</div>
-              <div style="font-size:12px;color:var(--text-muted)">Normal</div>
-            </div>
-            <div style="text-align:center;padding:.75rem;background:var(--amber-light);border-radius:var(--radius-sm)">
-              <div style="font-size:28px;font-weight:700;color:var(--amber)" id="ch-pref">0</div>
-              <div style="font-size:12px;color:var(--text-muted)">Preferencial</div>
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom:.75rem">
-            <label>Guichê destino</label>
-            <select id="ch-guiche-sel"><option value="">— Escolha um guichê —</option></select>
-          </div>
-          <button class="btn btn-primary btn-full" id="btn-ch-chamar" onclick="coordChamar()" style="padding:12px;font-size:15px" disabled>
-            Chamar próxima senha
-          </button>
-          <div id="ch-erro" class="alert alert-error mt-1" style="display:none"></div>
-        </div>
-      </div>
-      <!-- Última chamada -->
-      <div>
-        <div class="card mb-2" id="ch-ultima-box" style="display:none">
-          <div class="card-title">Última chamada</div>
-          <div style="text-align:center;padding:.5rem 0">
-            <div style="font-size:11px;color:var(--amber);font-weight:600;letter-spacing:1px;min-height:16px" id="ch-ul-pref"></div>
-            <div style="font-size:38px;font-weight:700;color:var(--text);line-height:1.1" id="ch-ul-num"></div>
-            <div style="font-size:16px;color:var(--blue);margin-top:4px" id="ch-ul-guiche"></div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="ch-ul-hora"></div>
+          <div class="card" id="ch-hist-box" style="display:none">
+            <div class="card-title">Histórico de hoje</div>
+            <div id="ch-hist-list"></div>
           </div>
         </div>
-        <div class="card" id="ch-hist-box" style="display:none">
-          <div class="card-title">Histórico de hoje</div>
-          <div id="ch-hist-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ GUICHÊS ═══ -->
+    <div class="pane" id="pane-guiches">
+      <div class="guiches-grid" id="guiches-grid"></div>
+    </div>
+
+    <!-- ═══ RELATÓRIO ═══ -->
+    <div class="pane" id="pane-relatorio">
+      <div class="periodo-btns">
+        <button class="btn btn-sm btn-primary" id="fp-hoje"   onclick="filtrarPeriodo('hoje')"  >Hoje</button>
+        <button class="btn btn-sm" id="fp-semana" onclick="filtrarPeriodo('semana')">Esta semana</button>
+        <button class="btn btn-sm" id="fp-mes"    onclick="filtrarPeriodo('mes')"   >Este mês</button>
+        <button class="btn btn-sm" id="fp-custom" onclick="filtrarPeriodo('custom')">Personalizado</button>
+        <div id="custom-dates" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;display:none">
+          <input type="date" id="data-inicio" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
+          <span class="text-muted">até</span>
+          <input type="date" id="data-fim" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
+          <button class="btn btn-sm btn-primary" onclick="carregarRelatorio()">Buscar</button>
+        </div>
+      </div>
+
+      <div id="rel-resumo"></div>
+
+      <div class="card">
+        <div class="rel-filters">
+          <input type="text" id="filtro-rel" placeholder="Filtrar por senha, guichê ou atendente..." oninput="filtrarRel()">
+          <button class="btn btn-sm" onclick="carregarRelatorio()">Atualizar</button>
+          <button class="btn btn-sm" onclick="exportarCSV()">⬇ CSV</button>
+          <button class="btn btn-sm btn-primary" onclick="exportarPDF()">⬇ PDF</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Data</th><th>Senha</th><th>Tipo</th><th>Guichê</th><th>Atendente</th><th>Hora</th></tr></thead>
+            <tbody id="rel-body"></tbody>
+          </table>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Guichês -->
-  <div class="tab-pane" id="tab-guiches">
-    <div class="guiches-grid" id="guiches-grid"></div>
-  </div>
-
-  <!-- Relatório -->
-  <div class="tab-pane" id="tab-relatorio">
-    <!-- Filtros de período -->
-    <div style="display:flex;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-sm" id="fp-hoje"    onclick="filtrarPeriodo('hoje')"    >Hoje</button>
-      <button class="btn btn-sm" id="fp-semana"  onclick="filtrarPeriodo('semana')"  >Esta semana</button>
-      <button class="btn btn-sm" id="fp-mes"     onclick="filtrarPeriodo('mes')"     >Este mês</button>
-      <button class="btn btn-sm" id="fp-custom"  onclick="filtrarPeriodo('custom')"  >Personalizado</button>
-      <div id="custom-dates" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap">
-        <input type="date" id="data-inicio" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
-        <span style="font-size:13px;color:var(--text-muted)">até</span>
-        <input type="date" id="data-fim"    style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
-        <button class="btn btn-sm btn-primary" onclick="carregarRelatorio()">Buscar</button>
+    <!-- ═══ USUÁRIOS ═══ -->
+    <div class="pane" id="pane-usuarios">
+      <div class="flex-between mb-2">
+        <span class="text-muted" style="font-size:14px">Gerencie os atendentes e coordenadores</span>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Novo usuário</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th></th></tr></thead>
+            <tbody id="usuarios-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- Resumo do período -->
-    <div id="rel-resumo" style="display:flex;gap:.75rem;margin-bottom:.75rem;flex-wrap:wrap"></div>
-
-    <div class="rel-filters">
-      <input type="text" id="filtro-rel" placeholder="Filtrar por senha, guichê ou atendente..." oninput="filtrarRel()">
-      <button class="btn btn-sm" onclick="carregarRelatorio()">Atualizar</button>
-      <button class="btn btn-sm" onclick="exportarCSV()">⬇ CSV</button>
-      <button class="btn btn-sm btn-primary" onclick="exportarPDF()">⬇ PDF</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>#</th><th>Data</th><th>Senha</th><th>Tipo</th><th>Guichê</th><th>Atendente</th><th>Hora</th></tr></thead>
-          <tbody id="rel-body"></tbody>
-        </table>
+    <!-- ═══ TIPOS ═══ -->
+    <div class="pane" id="pane-tipos">
+      <div class="flex-between mb-2">
+        <span class="text-muted" style="font-size:14px">Configure os tipos de atendimento</span>
+        <button class="btn btn-primary btn-sm" onclick="abrirModalTipo()">+ Novo tipo</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Prefixo</th><th>Preferencial</th><th>Status</th></tr></thead>
+            <tbody id="tipos-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Usuários -->
-  <div class="tab-pane" id="tab-usuarios">
-    <div class="flex-between mb-2">
-      <span class="text-muted" style="font-size:14px">Gerenciar atendentes</span>
-      <button class="btn btn-primary btn-sm" onclick="abrirModalUsuario()">+ Novo usuário</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th></th></tr></thead>
-          <tbody id="usuarios-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  </div><!-- /content -->
+</div><!-- /main -->
 
-  <!-- Tipos de Senha -->
-  <div class="tab-pane" id="tab-tipos">
-    <div class="flex-between mb-2">
-      <span class="text-muted" style="font-size:14px">Tipos de atendimento</span>
-      <button class="btn btn-primary btn-sm" onclick="abrirModalTipo()">+ Novo tipo</button>
-    </div>
-    <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Nome</th><th>Prefixo</th><th>Preferencial</th><th>Status</th></tr></thead>
-          <tbody id="tipos-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal Usuário -->
+<!-- ═══ MODAIS ═══ -->
 <div class="modal-bg" id="modal-usuario">
   <div class="modal">
     <h3>Novo usuário</h3>
-    <div class="form-group"><label>Nome</label><input type="text" id="u-nome" placeholder="Nome completo"></div>
+    <div class="form-group"><label>Nome completo</label><input type="text" id="u-nome" placeholder="Nome"></div>
     <div class="form-group"><label>Login</label><input type="text" id="u-login" placeholder="login"></div>
     <div class="form-group"><label>Senha</label><input type="password" id="u-senha" placeholder="Senha inicial"></div>
     <div class="form-group"><label>Perfil</label>
-      <select id="u-perfil"><option value="atendente">Atendente</option><option value="coordenador">Coordenador</option></select>
+      <select id="u-perfil">
+        <option value="atendente">Atendente</option>
+        <option value="acolhimento">Acolhimento (Coringa)</option>
+        <option value="coordenador">Coordenador</option>
+      </select>
     </div>
     <div id="modal-u-erro" class="alert alert-error" style="display:none"></div>
     <div class="flex gap-1 mt-2">
@@ -230,7 +467,6 @@
   </div>
 </div>
 
-<!-- Modal Tipo -->
 <div class="modal-bg" id="modal-tipo">
   <div class="modal">
     <h3>Novo tipo de senha</h3>
@@ -245,8 +481,59 @@
 </div>
 
 <script>
-  if (!SGA.token || SGA.perfil !== 'coordenador') window.location.href = '/login';
-  document.getElementById('nome-coord').textContent = SGA.nome;
+  // ── Auth ──
+  if (!SGA.token || (SGA.perfil !== 'coordenador' && SGA.perfil !== 'acolhimento')) window.location.href = '/login';
+  const isCoordCompleto = SGA.perfil === 'coordenador';
+
+  // ── Setup inicial ──
+  const nome = SGA.nome || 'Usuário';
+  document.getElementById('nome-coord').textContent = nome;
+  document.getElementById('perfil-label').textContent = SGA.perfil;
+  document.getElementById('avatar-inicial').textContent = nome.charAt(0).toUpperCase();
+
+  // Data no topbar
+  function atualizarData() {
+    const d = new Date();
+    document.getElementById('topbar-data').textContent =
+      d.toLocaleDateString('pt-BR', {weekday:'short', day:'2-digit', month:'short'});
+  }
+  atualizarData();
+
+  // Restringe abas para perfil acolhimento
+  if (!isCoordCompleto) {
+    document.getElementById('card-numeracao').style.display = 'none';
+    document.getElementById('nav-usuarios').style.display = 'none';
+    document.getElementById('nav-tipos').style.display = 'none';
+    document.getElementById('nav-section-admin').style.display = 'none';
+  }
+
+  // ── Sidebar mobile ──
+  function abrirSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('overlay').classList.add('open');
+  }
+  function fecharSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  // ── Navegação por panes ──
+  const panesTitles = {
+    chamar:'Chamar Senha', guiches:'Guichês',
+    relatorio:'Relatório', usuarios:'Usuários', tipos:'Tipos de Senha'
+  };
+  function mudarPane(nome, el) {
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('pane-'+nome).classList.add('active');
+    el.classList.add('active');
+    document.getElementById('topbar-title').innerHTML =
+      `${panesTitles[nome]} <span style="color:var(--primary)"></span>`;
+    fecharSidebar();
+    if(nome==='relatorio') carregarRelatorio();
+    if(nome==='usuarios')  carregarUsuarios();
+    if(nome==='tipos')     carregarTipos();
+  }
 
   let guichesData = [], relatorioData = [];
 
@@ -302,6 +589,11 @@
     if (normal !== null && normal !== undefined) {
       document.getElementById('st-normal').textContent = normal;
       document.getElementById('st-pref').textContent   = pref;
+      // Badge na sidebar
+      const total = normal + pref;
+      const badge = document.getElementById('badge-fila');
+      badge.style.display = total > 0 ? 'inline' : 'none';
+      badge.textContent = total;
     }
     if (guiches) {
       document.getElementById('st-ativos').textContent = guiches.filter(g => g.ativo).length;
@@ -312,13 +604,14 @@
   function renderGuiches(guiches) {
     document.getElementById('guiches-grid').innerHTML = guiches.map(g => {
       let cls = 'guiche-card';
-      if (g.senha_atual) cls += ' atendendo';
-      else if (g.ativo)  cls += ' ativo';
+      let statusCls = 'inativo', statusTxt = 'Inativo';
+      if (g.senha_atual) { cls += ' atendendo'; statusCls='atendendo'; statusTxt='Atendendo'; }
+      else if (g.ativo)  { cls += ' ativo';     statusCls='ativo';     statusTxt='Ativo'; }
       return `
         <div class="${cls}">
           <div class="g-nome">
             <span id="gnome-${g.id}">${g.nome}</span>
-            <button class="g-editar" onclick="editarNomeGuiche(${g.id})" title="Editar">✏️</button>
+            <button class="g-editar" onclick="editarNomeGuiche(${g.id})" title="Editar nome">✏️</button>
           </div>
           <div class="inline-edit" id="gedit-${g.id}">
             <input type="text" id="ginput-${g.id}" value="${g.nome}">
@@ -327,8 +620,8 @@
           </div>
           <div class="g-atendente">${g.atendente || '<span style="opacity:.5">Sem atendente</span>'}</div>
           <div class="g-senha ${g.preferencial?'pref':''}">${g.senha_atual ? 'Senha '+g.senha_atual : '—'}</div>
-          <span class="badge ${g.senha_atual?'badge-green':g.ativo?'badge-blue':'badge-gray'}" style="margin-top:6px">
-            ${g.senha_atual?'Atendendo':g.ativo?'Ativo':'Inativo'}
+          <span class="status-badge ${statusCls}">
+            ${{atendendo:'🟢',ativo:'🔵',inativo:'⚪'}[statusCls]} ${statusTxt}
           </span>
         </div>`;
     }).join('');
@@ -407,40 +700,29 @@
     if (!res.ok) { document.getElementById('ch-erro').textContent=res.erro; document.getElementById('ch-erro').style.display='block'; }
   }
 
+  function converterHora(horaUTC) {
+    if (!horaUTC) return '';
+    try {
+      const [h, m, s] = horaUTC.split(':').map(Number);
+      const d = new Date();
+      d.setUTCHours(h, m, s || 0, 0);
+      return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
+    } catch(e) { return horaUTC; }
+  }
+
   function mostrarUltimaChamada(c) {
     document.getElementById('ch-ultima-box').style.display='block';
     document.getElementById('ch-ul-pref').textContent    = c.preferencial?'★ PREFERENCIAL':'';
     document.getElementById('ch-ul-num').textContent     = 'Senha '+c.num;
     document.getElementById('ch-ul-guiche').textContent  = c.nomeGuiche;
-    // Converte o horário do servidor (UTC) para Fortaleza (UTC-3)
-    const [h, m, s] = c.hora.split(':').map(Number);
-    const dataUTC = new Date();
-    dataUTC.setUTCHours(h, m, s || 0);
-    const horaFortaleza = dataUTC.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
-    document.getElementById('ch-ul-hora').textContent = horaFortaleza;
+    document.getElementById('ch-ul-hora').textContent    = converterHora(c.hora);
     const hbox=document.getElementById('ch-hist-box'), hlist=document.getElementById('ch-hist-list');
     hbox.style.display='block';
     const row=document.createElement('div');
     row.className='hist-row';
-   function converterHora(horaUTC) {
-    const [h, m, s] = horaUTC.split(':').map(Number);
-    const d = new Date();
-    d.setUTCHours(h, m, s || 0);
-    return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
-    } 
+    row.innerHTML=`<span><strong>${c.num}</strong>${c.preferencial?' <span class="badge badge-amber" style="font-size:10px">Pref</span>':''} → ${c.nomeGuiche}</span><span class="text-muted">${converterHora(c.hora)}</span>`;
     hlist.prepend(row);
     if(hlist.children.length>6) hlist.lastChild.remove();
-  }
-
-  // ── Tabs ──
-  function mudarTab(nome, btn) {
-    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.getElementById('tab-'+nome).classList.add('active');
-    btn.classList.add('active');
-    if(nome==='relatorio') carregarRelatorio();
-    if(nome==='usuarios')  carregarUsuarios();
-    if(nome==='tipos')     carregarTipos();
   }
 
   // ── Relatório ──
@@ -448,37 +730,32 @@
 
   function filtrarPeriodo(p) {
     periodoAtual = p;
-    // Destaca botão ativo
     ['hoje','semana','mes','custom'].forEach(id => {
-      document.getElementById('fp-'+id).classList.toggle('btn-primary', id === p);
+      const btn = document.getElementById('fp-'+id);
+      btn.classList.toggle('btn-primary', id === p);
+      if (id !== 'hoje') btn.classList.toggle('btn-sm', true);
     });
-    // Mostra/esconde datas personalizadas
-    const customDates = document.getElementById('custom-dates');
-    customDates.style.display = p === 'custom' ? 'flex' : 'none';
+    const cd = document.getElementById('custom-dates');
+    cd.style.display = p === 'custom' ? 'flex' : 'none';
     if (p !== 'custom') carregarRelatorio();
   }
 
   function calcularPeriodo() {
     const hoje = new Date();
     const fmt = d => d.toLocaleDateString('pt-BR');
-
-    if (periodoAtual === 'hoje') {
-      return { inicio: fmt(hoje), fim: fmt(hoje) };
-    }
+    if (periodoAtual === 'hoje') return { inicio: fmt(hoje), fim: fmt(hoje) };
     if (periodoAtual === 'semana') {
       const seg = new Date(hoje);
       seg.setDate(hoje.getDate() - hoje.getDay() + (hoje.getDay() === 0 ? -6 : 1));
       return { inicio: fmt(seg), fim: fmt(hoje) };
     }
     if (periodoAtual === 'mes') {
-      const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      return { inicio: fmt(ini), fim: fmt(hoje) };
+      return { inicio: fmt(new Date(hoje.getFullYear(), hoje.getMonth(), 1)), fim: fmt(hoje) };
     }
     if (periodoAtual === 'custom') {
       const ini = document.getElementById('data-inicio').value;
       const fim = document.getElementById('data-fim').value;
       if (!ini || !fim) return null;
-      // Converte de yyyy-mm-dd para dd/mm/yyyy
       const fmtInput = v => v.split('-').reverse().join('/');
       return { inicio: fmtInput(ini), fim: fmtInput(fim) };
     }
@@ -486,7 +763,6 @@
   }
 
   function datasEntrePeriodo(data, inicio, fim) {
-    // Converte dd/mm/yyyy para Date
     const toDate = s => { const [d,m,y] = s.split('/'); return new Date(y,m-1,d); };
     const d = toDate(data), i = toDate(inicio), f = toDate(fim);
     return d >= i && d <= f;
@@ -495,51 +771,25 @@
   async function carregarRelatorio() {
     const periodo = calcularPeriodo();
     if (!periodo) return;
-
-    // Busca todos os registros do período via Supabase
     const res = await SGA.fetch(`/api/dados?recurso=relatorio&inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`);
-    relatorioData = (res.relatorio || []).filter(r =>
-      datasEntrePeriodo(r.data, periodo.inicio, periodo.fim)
-    );
-
-    // Atualiza contador
+    relatorioData = (res.relatorio || []).filter(r => datasEntrePeriodo(r.data, periodo.inicio, periodo.fim));
     document.getElementById('st-hoje').textContent = relatorioData.length;
-
-    // Resumo
     renderResumo(relatorioData, periodo);
     renderRelatorio(relatorioData);
   }
 
   function renderResumo(rows, periodo) {
-    const total  = rows.length;
-    const prefs  = rows.filter(r => r.preferencial).length;
-    const normais = total - prefs;
-
-    // Contagem por atendente
+    const total = rows.length, prefs = rows.filter(r=>r.preferencial).length, normais = total - prefs;
     const porAtend = {};
     rows.forEach(r => { porAtend[r.atendente] = (porAtend[r.atendente]||0)+1; });
-    const topAtend = Object.entries(porAtend).sort((a,b)=>b[1]-a[1])[0];
-
-    const label = periodo.inicio === periodo.fim
-      ? periodo.inicio
-      : `${periodo.inicio} a ${periodo.fim}`;
-
+    const top = Object.entries(porAtend).sort((a,b)=>b[1]-a[1])[0];
+    const label = periodo.inicio === periodo.fim ? periodo.inicio : `${periodo.inicio} a ${periodo.fim}`;
     document.getElementById('rel-resumo').innerHTML = `
-      <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
-        📅 <strong>${label}</strong>
-      </div>
-      <div style="background:var(--gray-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
-        Total: <strong>${total}</strong>
-      </div>
-      <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
-        Normal: <strong>${normais}</strong>
-      </div>
-      <div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
-        Preferencial: <strong>${prefs}</strong>
-      </div>
-      ${topAtend ? `<div style="background:var(--green-light);border-radius:var(--radius-sm);padding:.5rem 1rem;font-size:13px">
-        🏆 Mais atendimentos: <strong>${topAtend[0]}</strong> (${topAtend[1]})
-      </div>` : ''}
+      <div class="resumo-pill" style="background:var(--blue-light);color:var(--blue)">📅 <strong>${label}</strong></div>
+      <div class="resumo-pill" style="background:var(--gray-light);color:var(--gray)">Total: <strong>${total}</strong></div>
+      <div class="resumo-pill" style="background:var(--blue-light);color:var(--blue)">Normal: <strong>${normais}</strong></div>
+      <div class="resumo-pill" style="background:var(--amber-light);color:var(--amber)">Preferencial: <strong>${prefs}</strong></div>
+      ${top?`<div class="resumo-pill" style="background:var(--green-light);color:var(--green)">🏆 <strong>${top[0]}</strong> (${top[1]})</div>`:''}
     `;
   }
 
@@ -561,15 +811,10 @@
   function filtrarRel() {
     const q = document.getElementById('filtro-rel').value.toLowerCase();
     renderRelatorio(relatorioData.filter(r =>
-      r.num.toLowerCase().includes(q) ||
-      (r.nome_guiche||'').toLowerCase().includes(q) ||
-      (r.atendente||'').toLowerCase().includes(q) ||
-      (r.data||'').includes(q)
+      r.num.toLowerCase().includes(q) || (r.nome_guiche||'').toLowerCase().includes(q) ||
+      (r.atendente||'').toLowerCase().includes(q) || (r.data||'').includes(q)
     ));
   }
-
-  // Inicializa com "Hoje" ativo
-  document.getElementById('fp-hoje').classList.add('btn-primary');
 
   function exportarCSV() {
     const header='Senha,Tipo,Guichê,Atendente,Hora,Data\n';
@@ -584,9 +829,8 @@
     if(!relatorioData.length){alert('Nenhum dado para exportar.');return;}
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const hoje=new Date(), W=210, M=14;
-    let y=14;
-    doc.setFillColor(24,95,165); doc.rect(0,0,W,28,'F');
+    const hoje=new Date(), W=210, M=14; let y=14;
+    doc.setFillColor(255,109,45); doc.rect(0,0,W,28,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont('helvetica','bold');
     doc.text('PREFEITURA DE FORTALEZA',M,11);
     doc.setFontSize(10); doc.setFont('helvetica','normal');
@@ -594,12 +838,12 @@
     doc.setFontSize(9);
     doc.text(`Emitido em: ${hoje.toLocaleDateString('pt-BR')} às ${hoje.toLocaleTimeString('pt-BR')}`,M,24);
     y=38;
-    doc.setTextColor(24,95,165); doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.setTextColor(255,109,45); doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text('Relatório de Atendimentos',M,y); y+=6;
     doc.setDrawColor(200,200,200); doc.line(M,y,W-M,y); y+=6;
     const total=relatorioData.length, prefs=relatorioData.filter(r=>r.preferencial).length;
     const cW=(W-M*2-8)/3;
-    [{label:'Total',valor:total,cor:[24,95,165]},{label:'Normal',valor:total-prefs,cor:[63,110,17]},{label:'Preferencial',valor:prefs,cor:[133,79,11]}]
+    [{label:'Total',valor:total,cor:[255,109,45]},{label:'Normal',valor:total-prefs,cor:[24,95,165]},{label:'Preferencial',valor:prefs,cor:[133,79,11]}]
       .forEach((c,i)=>{
         const x=M+i*(cW+4);
         doc.setFillColor(...c.cor); doc.roundedRect(x,y,cW,16,2,2,'F');
@@ -639,8 +883,8 @@
     document.getElementById('usuarios-body').innerHTML = (Array.isArray(usuarios)?usuarios:[]).map(u=>`
       <tr>
         <td><strong>${u.nome}</strong></td>
-        <td>${u.login}</td>
-        <td><span class="badge ${u.perfil==='coordenador'?'badge-blue':'badge-gray'}">${u.perfil}</span></td>
+        <td><span style="font-size:12px;background:var(--bg);padding:2px 8px;border-radius:4px;font-family:monospace">${u.login}</span></td>
+        <td><span class="badge ${u.perfil==='coordenador'?'badge-blue':u.perfil==='acolhimento'?'badge-orange':'badge-gray'}">${u.perfil}</span></td>
         <td>${u.perfil!=='coordenador'?`<button class="btn btn-sm btn-danger" onclick="removerUsuario(${u.id})">Remover</button>`:''}</td>
       </tr>`).join('');
   }
@@ -671,11 +915,11 @@
     document.getElementById('tipos-body').innerHTML=(Array.isArray(tipos)?tipos:[]).map(t=>`
       <tr>
         <td><strong>${t.label}</strong></td>
-        <td>${t.prefixo||'—'}</td>
-        <td>${t.preferencial?'<span class="badge badge-amber">Sim</span>':'Não'}</td>
+        <td><span style="font-size:12px;background:var(--bg);padding:2px 8px;border-radius:4px;font-family:monospace">${t.prefixo||'—'}</span></td>
+        <td>${t.preferencial?'<span class="badge badge-amber">Sim</span>':'<span class="badge badge-gray">Não</span>'}</td>
         <td><label style="display:flex;align-items:center;gap:6px;cursor:pointer">
           <input type="checkbox" ${t.ativo?'checked':''} onchange="toggleTipo(${t.id},this.checked)">
-          ${t.ativo?'Ativo':'Inativo'}
+          <span class="badge ${t.ativo?'badge-green':'badge-gray'}">${t.ativo?'Ativo':'Inativo'}</span>
         </label></td>
       </tr>`).join('');
   }
@@ -712,53 +956,17 @@
   }
 
   async function atualizarTudo() {
-  try {
-    // efeito visual no botão
-    const btn = event.target;
-    const textoOriginal = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Atualizando...';
-    // busca estado atual
-    const d = await fetch('/api/estado').then(r => r.json());
-    // atualiza variáveis
-    guichesData = d.guiches || [];
-    // reaproveita suas funções existentes
-    renderGuiches(guichesData);
-    atualizarStats(
-      d.filaNormalQtd,
-      d.filaPrefQtd,
-      guichesData
-    );
-
-    popularSelectGuiches(guichesData);
-    atualizarChFila(
-      d.filaNormalQtd,
-      d.filaPrefQtd
-    );
-    atualizarProximas(
-      d.contadorNormal,
-      d.contadorPref,
-      d.contadorBaseNormal,
-      d.contadorBasePref
-    );
-    // atualiza relatório
-    await carregarRelatorio();
-    // feedback visual
-    btn.innerHTML = '✅ Atualizado';
-    setTimeout(() => {
-      btn.innerHTML = textoOriginal;
-      btn.disabled = false;
-    }, 1500);
-  } catch (err) {
-    console.error(err);
-    const btn = event.target;
-    btn.innerHTML = '❌ Erro';
-    setTimeout(() => {
-      btn.innerHTML = '🔄 Atualizar';
-      btn.disabled = false;
-    }, 2000);
+    try {
+      const d = await fetch('/api/estado').then(r => r.json());
+      guichesData = d.guiches || [];
+      renderGuiches(guichesData);
+      atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
+      popularSelectGuiches(guichesData);
+      atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
+      atualizarProximas(d.contadorNormal, d.contadorPref, d.contadorBaseNormal, d.contadorBasePref);
+      await carregarRelatorio();
+    } catch(e) { console.error(e); }
   }
-}
 
   SGA.iniciarRealtime();
   SGA.carregarEstado();
