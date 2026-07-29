@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/js/sga.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 /* ── Reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -192,6 +193,104 @@ tr:hover td{background:var(--bg)}
 .flex{display:flex}.flex-between{display:flex;align-items:center;justify-content:space-between}
 .flex-center{display:flex;align-items:center}.gap-1{gap:.5rem}.gap-2{gap:1rem}
 .text-muted{color:var(--text-muted)}.text-center{text-align:center}
+
+/* ── Relatório KPIs e Gráficos ── */
+.kpi-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.kpi-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid var(--primary);
+  transition: transform .15s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.kpi-card.kpi-blue { border-top-color: var(--blue); }
+.kpi-card.kpi-amber { border-top-color: var(--amber); }
+.kpi-card.kpi-green { border-top-color: var(--green); }
+.kpi-card.kpi-purple { border-top-color: #8b5cf6; }
+
+.kpi-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+@media(max-width: 880px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+.chart-box {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+.chart-container {
+  position: relative;
+  height: 250px;
+  width: 100%;
+}
+
+.rel-filters-advanced {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1rem;
+  background: var(--bg);
+  padding: .75rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.rel-filters-advanced select, .rel-filters-advanced input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  background: var(--white);
+  color: var(--text);
+  outline: none;
+}
+.rel-filters-advanced select:focus, .rel-filters-advanced input:focus {
+  border-color: var(--primary);
+}
+.rel-filters-advanced input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+}
 
 /* ── Responsive ── */
 @media(max-width:900px){
@@ -379,12 +478,12 @@ tr:hover td{background:var(--bg)}
 
     <!-- ═══ RELATÓRIO ═══ -->
     <div class="pane" id="pane-relatorio">
-      <div class="periodo-btns">
+      <div class="periodo-btns mb-2" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
         <button class="btn btn-sm btn-primary" id="fp-hoje"   onclick="filtrarPeriodo('hoje')"  >Hoje</button>
         <button class="btn btn-sm" id="fp-semana" onclick="filtrarPeriodo('semana')">Esta semana</button>
         <button class="btn btn-sm" id="fp-mes"    onclick="filtrarPeriodo('mes')"   >Este mês</button>
         <button class="btn btn-sm" id="fp-custom" onclick="filtrarPeriodo('custom')">Personalizado</button>
-        <div id="custom-dates" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap;display:none">
+        <div id="custom-dates" style="display:none;gap:.5rem;align-items:center;flex-wrap:wrap">
           <input type="date" id="data-inicio" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
           <span class="text-muted">até</span>
           <input type="date" id="data-fim" style="padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px">
@@ -392,15 +491,49 @@ tr:hover td{background:var(--bg)}
         </div>
       </div>
 
-      <div id="rel-resumo"></div>
+      <!-- 1. KPIs (Indicadores de Desempenho) -->
+      <div id="rel-kpis" class="kpi-cards-grid"></div>
 
-      <div class="card">
-        <div class="rel-filters">
-          <input type="text" id="filtro-rel" placeholder="Filtrar por senha, guichê ou atendente..." oninput="filtrarRel()">
-          <button class="btn btn-sm" onclick="carregarRelatorio()">Atualizar</button>
-          <button class="btn btn-sm" onclick="exportarCSV()">⬇ CSV</button>
-          <button class="btn btn-sm btn-primary" onclick="exportarPDF()">⬇ PDF</button>
+      <!-- 2. Gráficos de Tendência e Horários de Pico -->
+      <div class="charts-grid">
+        <div class="chart-box">
+          <div class="card-title">📈 Horários de Pico (Atendimentos por Hora)</div>
+          <div class="chart-container">
+            <canvas id="chart-pico"></canvas>
+          </div>
         </div>
+        <div class="chart-box">
+          <div class="card-title">📊 Atendimentos por Atendente</div>
+          <div class="chart-container">
+            <canvas id="chart-atendentes"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Filtros Avançados e Tabela -->
+      <div class="card">
+        <div class="rel-filters-advanced">
+          <input type="text" id="filtro-rel" placeholder="🔍 Buscar por senha, guichê ou atendente..." oninput="filtrarRel()">
+          
+          <select id="filtro-atendente" onchange="filtrarRel()">
+            <option value="">👤 Todos os Atendentes</option>
+          </select>
+
+          <select id="filtro-guiche" onchange="filtrarRel()">
+            <option value="">🖥️ Todos os Guichês</option>
+          </select>
+
+          <select id="filtro-tipo" onchange="filtrarRel()">
+            <option value="">🏷️ Todos os Tipos</option>
+            <option value="normal">Normal</option>
+            <option value="preferencial">Preferencial</option>
+          </select>
+
+          <button class="btn btn-sm" onclick="carregarRelatorio()" title="Atualizar dados">🔄 Atualizar</button>
+          <button class="btn btn-sm" onclick="exportarCSV()" title="Exportar para CSV (Excel)">⬇ CSV</button>
+          <button class="btn btn-sm btn-primary" onclick="exportarPDF()" title="Exportar PDF Relatório">⬇ PDF</button>
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead><tr><th>#</th><th>Data</th><th>Senha</th><th>Tipo</th><th>Guichê</th><th>Atendente</th><th>Hora</th></tr></thead>
@@ -731,16 +864,21 @@ tr:hover td{background:var(--bg)}
 
   // ── Relatório ──
   let periodoAtual = 'hoje';
+  let chartPicoInstance = null;
+  let chartAtendentesInstance = null;
+  let filteredRelatorioData = [];
 
   function filtrarPeriodo(p) {
     periodoAtual = p;
     ['hoje','semana','mes','custom'].forEach(id => {
       const btn = document.getElementById('fp-'+id);
-      btn.classList.toggle('btn-primary', id === p);
-      if (id !== 'hoje') btn.classList.toggle('btn-sm', true);
+      if (btn) {
+        btn.classList.toggle('btn-primary', id === p);
+        if (id !== 'hoje') btn.classList.toggle('btn-sm', true);
+      }
     });
     const cd = document.getElementById('custom-dates');
-    cd.style.display = p === 'custom' ? 'flex' : 'none';
+    if (cd) cd.style.display = p === 'custom' ? 'flex' : 'none';
     if (p !== 'custom') carregarRelatorio();
   }
 
@@ -772,107 +910,327 @@ tr:hover td{background:var(--bg)}
     const res = await SGA.fetch(`/api/dados?recurso=relatorio&inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`);
     relatorioData = res.relatorio || [];
     document.getElementById('st-hoje').textContent = relatorioData.length;
-    renderResumo(relatorioData, periodo);
-    renderRelatorio(relatorioData);
+    popularFiltrosDinamicos(relatorioData);
+    filtrarRel();
   }
 
-  function renderResumo(rows, periodo) {
-    const total = rows.length, prefs = rows.filter(r=>r.preferencial).length, normais = total - prefs;
+  function popularFiltrosDinamicos(rows) {
+    const selAtend = document.getElementById('filtro-atendente');
+    const selGuiche = document.getElementById('filtro-guiche');
+    if (!selAtend || !selGuiche) return;
+
+    const valAtend = selAtend.value;
+    const valGuiche = selGuiche.value;
+
+    const atendentes = [...new Set(rows.map(r => r.atendente).filter(Boolean))].sort();
+    const guiches = [...new Set(rows.map(r => r.nome_guiche).filter(Boolean))].sort();
+
+    selAtend.innerHTML = '<option value="">👤 Todos os Atendentes</option>' +
+      atendentes.map(a => `<option value="${a}">${a}</option>`).join('');
+
+    selGuiche.innerHTML = '<option value="">🖥️ Todos os Guichês</option>' +
+      guiches.map(g => `<option value="${g}">${g}</option>`).join('');
+
+    if (valAtend && atendentes.includes(valAtend)) selAtend.value = valAtend;
+    if (valGuiche && guiches.includes(valGuiche)) selGuiche.value = valGuiche;
+  }
+
+  function filtrarRel() {
+    const q = (document.getElementById('filtro-rel')?.value || '').toLowerCase().trim();
+    const selAtend = document.getElementById('filtro-atendente')?.value || '';
+    const selGuiche = document.getElementById('filtro-guiche')?.value || '';
+    const selTipo = document.getElementById('filtro-tipo')?.value || '';
+
+    filteredRelatorioData = relatorioData.filter(r => {
+      const horaFmt = converterHora(r.hora, r.criado_em);
+      const matchText = !q || (r.num||'').toLowerCase().includes(q) ||
+                        (r.nome_guiche||'').toLowerCase().includes(q) ||
+                        (r.atendente||'').toLowerCase().includes(q) ||
+                        (r.data||'').includes(q) ||
+                        horaFmt.includes(q);
+      const matchAtend = !selAtend || r.atendente === selAtend;
+      const matchGuiche = !selGuiche || r.nome_guiche === selGuiche;
+      const matchTipo = !selTipo || (selTipo === 'preferencial' ? r.preferencial : !r.preferencial);
+      return matchText && matchAtend && matchGuiche && matchTipo;
+    });
+
+    const periodo = calcularPeriodo();
+    renderKPIs(filteredRelatorioData, periodo);
+    renderCharts(filteredRelatorioData);
+    renderRelatorio(filteredRelatorioData);
+  }
+
+  function renderKPIs(rows, periodo) {
+    const total = rows.length;
+    const prefs = rows.filter(r => r.preferencial).length;
+    const normais = total - prefs;
+    const pctPref = total > 0 ? Math.round((prefs / total) * 100) : 0;
+
+    // Top Atendente
     const porAtend = {};
-    rows.forEach(r => { porAtend[r.atendente] = (porAtend[r.atendente]||0)+1; });
-    const top = Object.entries(porAtend).sort((a,b)=>b[1]-a[1])[0];
-    const label = periodo.inicio === periodo.fim ? periodo.inicio : `${periodo.inicio} a ${periodo.fim}`;
-    document.getElementById('rel-resumo').innerHTML = `
-      <div class="resumo-pill" style="background:var(--blue-light);color:var(--blue)">📅 <strong>${label}</strong></div>
-      <div class="resumo-pill" style="background:var(--gray-light);color:var(--gray)">Total: <strong>${total}</strong></div>
-      <div class="resumo-pill" style="background:var(--blue-light);color:var(--blue)">Normal: <strong>${normais}</strong></div>
-      <div class="resumo-pill" style="background:var(--amber-light);color:var(--amber)">Preferencial: <strong>${prefs}</strong></div>
-      ${top?`<div class="resumo-pill" style="background:var(--green-light);color:var(--green)">🏆 <strong>${top[0]}</strong> (${top[1]})</div>`:''}
+    rows.forEach(r => { if (r.atendente) porAtend[r.atendente] = (porAtend[r.atendente] || 0) + 1; });
+    const topAtend = Object.entries(porAtend).sort((a,b) => b[1] - a[1])[0];
+
+    // Top Guichê
+    const porGuiche = {};
+    rows.forEach(r => { if (r.nome_guiche) porGuiche[r.nome_guiche] = (porGuiche[r.nome_guiche] || 0) + 1; });
+    const topGuiche = Object.entries(porGuiche).sort((a,b) => b[1] - a[1])[0];
+
+    // Horário de Pico
+    const porHora = {};
+    rows.forEach(r => {
+      const hStr = converterHora(r.hora, r.criado_em);
+      if (hStr && hStr.includes(':')) {
+        const h = hStr.split(':')[0] + 'h';
+        porHora[h] = (porHora[h] || 0) + 1;
+      }
+    });
+    const topHora = Object.entries(porHora).sort((a,b) => b[1] - a[1])[0];
+
+    const container = document.getElementById('rel-kpis');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-title">📋 Total Atendimentos</div>
+        <div class="kpi-value">${total}</div>
+        <div class="kpi-sub">Normal: ${normais} | Pref: ${prefs}</div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-title">⭐ Taxa Preferencial</div>
+        <div class="kpi-value">${pctPref}%</div>
+        <div class="kpi-sub">${prefs} de ${total} chamadas</div>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-title">🏆 Atendente Destaque</div>
+        <div class="kpi-value">${topAtend ? topAtend[0] : '—'}</div>
+        <div class="kpi-sub">${topAtend ? topAtend[1] + ' atendimentos' : 'Sem dados'}</div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-title">🖥️ Guichê Mais Ativo</div>
+        <div class="kpi-value">${topGuiche ? topGuiche[0] : '—'}</div>
+        <div class="kpi-sub">${topGuiche ? topGuiche[1] + ' atendimentos' : 'Sem dados'}</div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-title">🔥 Horário de Pico</div>
+        <div class="kpi-value">${topHora ? topHora[0] : '—'}</div>
+        <div class="kpi-sub">${topHora ? topHora[1] + ' chamadas nessa hora' : 'Sem dados'}</div>
+      </div>
     `;
+  }
+
+  function renderCharts(rows) {
+    if (typeof Chart === 'undefined') return;
+
+    // 1. Gráfico Horários de Pico
+    const horasMap = { '07h':0,'08h':0,'09h':0,'10h':0,'11h':0,'12h':0,'13h':0,'14h':0,'15h':0,'16h':0,'17h':0,'18h':0 };
+    rows.forEach(r => {
+      const hStr = converterHora(r.hora, r.criado_em);
+      if (hStr && hStr.includes(':')) {
+        const h = hStr.split(':')[0] + 'h';
+        if (horasMap[h] !== undefined) horasMap[h]++;
+      }
+    });
+
+    const canvasPico = document.getElementById('chart-pico');
+    if (canvasPico) {
+      if (chartPicoInstance) chartPicoInstance.destroy();
+      const ctx = canvasPico.getContext('2d');
+      chartPicoInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(horasMap),
+          datasets: [{
+            label: 'Atendimentos',
+            data: Object.values(horasMap),
+            backgroundColor: 'rgba(255, 109, 45, 0.75)',
+            borderColor: '#FF6D2D',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+
+    // 2. Gráfico por Atendente
+    const atendentesMap = {};
+    rows.forEach(r => {
+      const a = r.atendente || 'Sem Atendente';
+      atendentesMap[a] = (atendentesMap[a] || 0) + 1;
+    });
+
+    const sortedAtend = Object.entries(atendentesMap).sort((a,b) => b[1] - a[1]);
+    const labelsAtend = sortedAtend.map(x => x[0]);
+    const dataAtend = sortedAtend.map(x => x[1]);
+
+    const canvasAtend = document.getElementById('chart-atendentes');
+    if (canvasAtend) {
+      if (chartAtendentesInstance) chartAtendentesInstance.destroy();
+      const ctx = canvasAtend.getContext('2d');
+      chartAtendentesInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labelsAtend.length ? labelsAtend : ['Nenhum'],
+          datasets: [{
+            label: 'Atendimentos',
+            data: dataAtend.length ? dataAtend : [0],
+            backgroundColor: 'rgba(24, 95, 165, 0.75)',
+            borderColor: '#185FA5',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
   }
 
   function renderRelatorio(rows) {
     document.getElementById('rel-body').innerHTML = !rows.length
-      ? '<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">Nenhum atendimento no período</td></tr>'
-      : rows.map((r,i)=>`
+      ? '<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">Nenhum atendimento encontrado para os filtros selecionados</td></tr>'
+      : rows.map((r,i) => `
           <tr>
-            <td class="text-muted">${rows.length-i}</td>
-            <td style="font-size:12px;color:var(--text-muted)">${r.data||''}</td>
+            <td class="text-muted">${rows.length - i}</td>
+            <td style="font-size:12px;color:var(--text-muted)">${r.data || ''}</td>
             <td><strong>${r.num}</strong></td>
-            <td>${r.preferencial?'<span class="badge badge-amber">Preferencial</span>':'<span class="badge badge-gray">Normal</span>'}</td>
+            <td>${r.preferencial ? '<span class="badge badge-amber">Preferencial</span>' : '<span class="badge badge-gray">Normal</span>'}</td>
             <td>${r.nome_guiche}</td>
-            <td>${r.atendente||'—'}</td>
+            <td>${r.atendente || '—'}</td>
             <td>${converterHora(r.hora, r.criado_em)}</td>
           </tr>`).join('');
   }
 
-  function filtrarRel() {
-    const q = document.getElementById('filtro-rel').value.toLowerCase();
-    renderRelatorio(relatorioData.filter(r =>
-      r.num.toLowerCase().includes(q) || (r.nome_guiche||'').toLowerCase().includes(q) ||
-      (r.atendente||'').toLowerCase().includes(q) || (r.data||'').includes(q)
-    ));
-  }
-
   function exportarCSV() {
-    const header='Senha,Tipo,Guichê,Atendente,Hora,Data\n';
-    const rows=relatorioData.map(r=>`${r.num},${r.preferencial?'Preferencial':'Normal'},${r.nome_guiche},${r.atendente},${converterHora(r.hora, r.criado_em)},${r.data}`).join('\n');
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([header+rows],{type:'text/csv;charset=utf-8;'}));
-    a.download=`relatorio-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
+    const dataExport = filteredRelatorioData.length ? filteredRelatorioData : relatorioData;
+    if (!dataExport.length) { alert('Nenhum dado para exportar.'); return; }
+
+    const header = 'Senha,Tipo,Guichê,Atendente,Hora,Data\n';
+    const rows = dataExport.map(r =>
+      `"${r.num}","${r.preferencial?'Preferencial':'Normal'}","${r.nome_guiche||''}","${r.atendente||''}","${converterHora(r.hora, r.criado_em)}","${r.data||''}"`
+    ).join('\n');
+
+    // BOM UTF-8 (\uFEFF) garante acentuação correta no Excel
+    const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `relatorio-acolhimento-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
     a.click();
   }
 
   function exportarPDF() {
-    if(!relatorioData.length){alert('Nenhum dado para exportar.');return;}
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const hoje=new Date(), W=210, M=14; let y=14;
-    doc.setFillColor(255,109,45); doc.rect(0,0,W,28,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(16); doc.setFont('helvetica','bold');
-    doc.text('PREFEITURA DE FORTALEZA',M,11);
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text('Secretaria Regional 6 — Setor de Acolhimento',M,18);
+    const dataExport = filteredRelatorioData.length ? filteredRelatorioData : relatorioData;
+    if (!dataExport.length) { alert('Nenhum dado para exportar.'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const hoje = new Date(), W = 210, M = 14; let y = 14;
+
+    // Cabeçalho da Prefeitura
+    doc.setFillColor(255, 109, 45); doc.rect(0, 0, W, 28, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text('PREFEITURA DE FORTALEZA', M, 11);
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text('Secretaria Regional 6 — Setor de Acolhimento', M, 18);
     doc.setFontSize(9);
-    doc.text(`Emitido em: ${hoje.toLocaleDateString('pt-BR')} às ${hoje.toLocaleTimeString('pt-BR')}`,M,24);
-    y=38;
-    doc.setTextColor(255,109,45); doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.text('Relatório de Atendimentos',M,y); y+=6;
-    doc.setDrawColor(200,200,200); doc.line(M,y,W-M,y); y+=6;
-    const total=relatorioData.length, prefs=relatorioData.filter(r=>r.preferencial).length;
-    const cW=(W-M*2-8)/3;
-    [{label:'Total',valor:total,cor:[255,109,45]},{label:'Normal',valor:total-prefs,cor:[24,95,165]},{label:'Preferencial',valor:prefs,cor:[133,79,11]}]
-      .forEach((c,i)=>{
-        const x=M+i*(cW+4);
-        doc.setFillColor(...c.cor); doc.roundedRect(x,y,cW,16,2,2,'F');
-        doc.setTextColor(255,255,255); doc.setFontSize(18); doc.setFont('helvetica','bold');
-        doc.text(String(c.valor),x+cW/2,y+10,{align:'center'});
-        doc.setFontSize(8); doc.setFont('helvetica','normal');
-        doc.text(c.label,x+cW/2,y+14.5,{align:'center'});
-      });
-    y+=24;
-    const cols=[{label:'#',w:12},{label:'Senha',w:26},{label:'Tipo',w:36},{label:'Guichê',w:36},{label:'Atendente',w:48},{label:'Hora',w:24}];
-    doc.setFillColor(240,242,246); doc.rect(M,y,W-M*2,7,'F');
-    doc.setTextColor(50,50,50); doc.setFontSize(8); doc.setFont('helvetica','bold');
-    let cx=M+2; cols.forEach(c=>{doc.text(c.label,cx,y+4.8);cx+=c.w;}); y+=7;
-    doc.setFont('helvetica','normal');
-    relatorioData.slice().reverse().forEach((r,i)=>{
-      if(y+6.5>282){doc.addPage();y=14;}
-      if(i%2===0){doc.setFillColor(250,250,252);doc.rect(M,y,W-M*2,6.5,'F');}
-      doc.setTextColor(30,30,30); cx=M+2;
-      [String(relatorioData.length-i),r.num,r.preferencial?'★ Pref':'Normal',r.nome_guiche,r.atendente||'—',converterHora(r.hora, r.criado_em)]
-        .forEach((v,ci)=>{
-          if(ci===2&&r.preferencial)doc.setTextColor(133,79,11); else doc.setTextColor(30,30,30);
-          doc.text(v,cx,y+4.3,{maxWidth:cols[ci].w-2}); cx+=cols[ci].w;
-        });
-      doc.setDrawColor(230,230,235); doc.line(M,y+6.5,W-M,y+6.5); y+=6.5;
+    doc.text(`Emitido em: ${hoje.toLocaleDateString('pt-BR')} às ${hoje.toLocaleTimeString('pt-BR')}`, M, 24);
+
+    y = 36;
+    doc.setTextColor(255, 109, 45); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('Relatório Gerencial de Atendimentos', M, y); y += 6;
+    doc.setDrawColor(200, 200, 200); doc.line(M, y, W - M, y); y += 6;
+
+    // Cards de Resumo no PDF
+    const total = dataExport.length;
+    const prefs = dataExport.filter(r => r.preferencial).length;
+    const normais = total - prefs;
+    const cW = (W - M * 2 - 8) / 3;
+
+    [
+      { label: 'Total', valor: total, cor: [255, 109, 45] },
+      { label: 'Normal', valor: normais, cor: [24, 95, 165] },
+      { label: 'Preferencial', valor: prefs, cor: [133, 79, 11] }
+    ].forEach((c, i) => {
+      const x = M + i * (cW + 4);
+      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW, 16, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
+      doc.text(String(c.valor), x + cW / 2, y + 10, { align: 'center' });
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+      doc.text(c.label, x + cW / 2, y + 14.5, { align: 'center' });
     });
-    const totalPages=doc.internal.getNumberOfPages();
-    for(let p=1;p<=totalPages;p++){
-      doc.setPage(p); doc.setFontSize(8); doc.setTextColor(160,160,160);
-      doc.text(`Prefeitura de Fortaleza — Regional 6 — Acolhimento  |  Página ${p} de ${totalPages}`,W/2,292,{align:'center'});
+
+    y += 24;
+
+    // Tabela
+    const cols = [
+      { label: '#', w: 12 },
+      { label: 'Senha', w: 26 },
+      { label: 'Tipo', w: 34 },
+      { label: 'Guichê', w: 36 },
+      { label: 'Atendente', w: 50 },
+      { label: 'Hora', w: 24 }
+    ];
+
+    doc.setFillColor(240, 242, 246); doc.rect(M, y, W - M * 2, 7, 'F');
+    doc.setTextColor(50, 50, 50); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+    let cx = M + 2; cols.forEach(c => { doc.text(c.label, cx, y + 4.8); cx += c.w; }); y += 7;
+
+    doc.setFont('helvetica', 'normal');
+    dataExport.slice().reverse().forEach((r, i) => {
+      if (y + 6.5 > 280) {
+        doc.addPage();
+        y = 14;
+        // Re-desenha cabeçalho de tabela na nova página
+        doc.setFillColor(240, 242, 246); doc.rect(M, y, W - M * 2, 7, 'F');
+        doc.setTextColor(50, 50, 50); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+        cx = M + 2; cols.forEach(c => { doc.text(c.label, cx, y + 4.8); cx += c.w; }); y += 7;
+        doc.setFont('helvetica', 'normal');
+      }
+
+      if (i % 2 === 0) { doc.setFillColor(250, 250, 252); doc.rect(M, y, W - M * 2, 6.5, 'F'); }
+      doc.setTextColor(30, 30, 30); cx = M + 2;
+
+      const vals = [
+        String(dataExport.length - i),
+        r.num || '',
+        r.preferencial ? '★ Preferencial' : 'Normal',
+        r.nome_guiche || '',
+        r.atendente || '—',
+        converterHora(r.hora, r.criado_em)
+      ];
+
+      vals.forEach((v, ci) => {
+        if (ci === 2 && r.preferencial) doc.setTextColor(133, 79, 11);
+        else doc.setTextColor(30, 30, 30);
+        doc.text(v, cx, y + 4.3, { maxWidth: cols[ci].w - 2 });
+        cx += cols[ci].w;
+      });
+
+      doc.setDrawColor(230, 230, 235); doc.line(M, y + 6.5, W - M, y + 6.5); y += 6.5;
+    });
+
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p); doc.setFontSize(8); doc.setTextColor(160, 160, 160);
+      doc.text(`Prefeitura de Fortaleza — Regional 6 — Acolhimento  |  Página ${p} de ${totalPages}`, W / 2, 292, { align: 'center' });
     }
-    doc.save(`relatorio-acolhimento-${hoje.toLocaleDateString('pt-BR').replace(/\//g,'-')}.pdf`);
+
+    doc.save(`relatorio-acolhimento-${hoje.toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
   }
 
   // ── Usuários ──
