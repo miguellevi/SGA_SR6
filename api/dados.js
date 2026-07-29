@@ -2,6 +2,58 @@ const { supabase } = require('../lib/supabase');
 const { verificarAuth, somenteCoord } = require('./_auth');
 const { dataFortaleza } = require('../lib/horario');
 
+// Converter qualquer string de data ou timestamp para YYYY-MM-DD em Fortaleza (UTC-3)
+function toYYYYMMDD(dataVal, criadoEmVal) {
+  if (criadoEmVal) {
+    try {
+      const str = typeof criadoEmVal === 'string' ? criadoEmVal.replace(' ', 'T') : criadoEmVal;
+      const isoStr = (typeof str === 'string' && !str.endsWith('Z') && !str.includes('+')) ? str + 'Z' : str;
+      const dt = new Date(isoStr);
+      if (!isNaN(dt.getTime())) {
+        const fortMs = dt.getTime() - (3 * 60 * 60 * 1000);
+        const fortDate = new Date(fortMs);
+        const y = fortDate.getUTCFullYear();
+        const m = String(fortDate.getUTCMonth() + 1).padStart(2, '0');
+        const d = String(fortDate.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+    } catch (e) {}
+  }
+
+  if (dataVal && typeof dataVal === 'string') {
+    const clean = dataVal.trim().replace(/[^\d\/-]/g, '');
+    if (clean.includes('/')) {
+      const parts = clean.split('/');
+      if (parts.length === 3) {
+        const d = parts[0].padStart(2, '0');
+        const m = parts[1].padStart(2, '0');
+        let y = parts[2];
+        if (y.length === 2) y = '20' + y;
+        return `${y}-${m}-${d}`;
+      }
+    }
+    if (clean.includes('-')) {
+      const parts = clean.split('T')[0].split('-');
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+        } else {
+          let y = parts[2];
+          if (y.length === 2) y = '20' + y;
+          return `${y}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+function parseParam(s) {
+  if (!s) return '';
+  return toYYYYMMDD(s, null) || '';
+}
+
 module.exports = async function handler(req, res) {
   try {
     const usuario = await verificarAuth(req);
@@ -15,58 +67,26 @@ module.exports = async function handler(req, res) {
       const fim    = req.query.fim    || dataFortaleza();
 
       // Busca registros
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('relatorio')
         .select('*')
-        .order('criado_em', { ascending: true });
+        .order('criado_em', { ascending: false });
 
-      function toIsoDate(val, criadoEm) {
-        if (criadoEm) {
-          try {
-            const str = typeof criadoEm === 'string' ? criadoEm.replace(' ', 'T') : criadoEm;
-            const isoStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
-            const dt = new Date(isoStr);
-            if (!isNaN(dt.getTime())) {
-              const dateStr = dt.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
-              const [d, m, y] = dateStr.split('/');
-              if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-            }
-          } catch (e) {}
-        }
-        if (val && typeof val === 'string') {
-          const s = val.trim();
-          if (s.includes('/')) {
-            const [d, m, y] = s.split('/');
-            if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-          }
-          if (s.includes('-')) {
-            const clean = s.split('T')[0];
-            const p = clean.split('-');
-            if (p.length === 3) {
-              if (p[0].length === 4) return clean;
-              return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
-            }
-          }
-        }
-        return null;
+      if (error) {
+        console.error('Erro ao buscar relatorio:', error);
+        return res.status(500).json({ ok: false, erro: error.message });
       }
 
-      function paramToIsoDate(s) {
-        if (!s) return '';
-        if (s.includes('/')) {
-          const [d, m, y] = s.split('/');
-          return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-        }
-        return s.split('T')[0];
-      }
+      const isoIni = parseParam(inicio);
+      const isoFim = parseParam(fim);
 
-      const isoIni = paramToIsoDate(inicio);
-      const isoFim = paramToIsoDate(fim);
+      const minIso = isoIni && isoFim ? (isoIni <= isoFim ? isoIni : isoFim) : (isoIni || isoFim);
+      const maxIso = isoIni && isoFim ? (isoIni <= isoFim ? isoFim : isoIni) : (isoIni || isoFim);
 
       const filtrado = (data || []).filter(r => {
-        const rIso = toIsoDate(r.data, r.criado_em);
-        if (!rIso) return true;
-        return rIso >= isoIni && rIso <= isoFim;
+        const rIso = toYYYYMMDD(r.data, r.criado_em);
+        if (!rIso || !minIso || !maxIso) return true;
+        return rIso >= minIso && rIso <= maxIso;
       });
 
       return res.json({ ok: true, relatorio: filtrado, total: filtrado.length });
