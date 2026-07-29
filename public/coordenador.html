@@ -1155,26 +1155,72 @@ tr:hover td{background:var(--bg)}
     doc.text('Relatório Gerencial de Atendimentos', M, y); y += 6;
     doc.setDrawColor(200, 200, 200); doc.line(M, y, W - M, y); y += 6;
 
-    // Cards de Resumo no PDF
+    // Indicadores / KPIs para o PDF
     const total = dataExport.length;
     const prefs = dataExport.filter(r => r.preferencial).length;
     const normais = total - prefs;
-    const cW = (W - M * 2 - 8) / 3;
+    const pctPref = total > 0 ? Math.round((prefs / total) * 100) : 0;
 
-    [
-      { label: 'Total', valor: total, cor: [255, 109, 45] },
-      { label: 'Normal', valor: normais, cor: [24, 95, 165] },
-      { label: 'Preferencial', valor: prefs, cor: [133, 79, 11] }
-    ].forEach((c, i) => {
-      const x = M + i * (cW + 4);
-      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW, 16, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFontSize(18); doc.setFont('helvetica', 'bold');
-      doc.text(String(c.valor), x + cW / 2, y + 10, { align: 'center' });
-      doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-      doc.text(c.label, x + cW / 2, y + 14.5, { align: 'center' });
+    const porAtend = {};
+    dataExport.forEach(r => { if (r.atendente) porAtend[r.atendente] = (porAtend[r.atendente] || 0) + 1; });
+    const topAtend = Object.entries(porAtend).sort((a,b) => b[1] - a[1])[0];
+
+    const porGuiche = {};
+    dataExport.forEach(r => { if (r.nome_guiche) porGuiche[r.nome_guiche] = (porGuiche[r.nome_guiche] || 0) + 1; });
+    const topGuiche = Object.entries(porGuiche).sort((a,b) => b[1] - a[1])[0];
+
+    const porHora = {};
+    dataExport.forEach(r => {
+      const hStr = converterHora(r.hora, r.criado_em);
+      if (hStr && hStr.includes(':')) {
+        const h = hStr.split(':')[0] + 'h';
+        porHora[h] = (porHora[h] || 0) + 1;
+      }
+    });
+    const topHora = Object.entries(porHora).sort((a,b) => b[1] - a[1])[0];
+
+    // Cards de Indicadores no PDF (Linha 1: Total, Pref %, Horário Pico)
+    const cW3 = (W - M * 2 - 8) / 3;
+    const cardsRow1 = [
+      { label: 'Total Atendimentos', valor: String(total), sub: `Norm: ${normais} | Pref: ${prefs}`, cor: [255, 109, 45] },
+      { label: 'Taxa Preferencial', valor: `${pctPref}%`, sub: `${prefs} de ${total} chamadas`, cor: [217, 119, 6] },
+      { label: 'Horário de Pico', valor: topHora ? topHora[0] : '—', sub: topHora ? `${topHora[1]} chamadas nessa hora` : 'Sem dados', cor: [139, 92, 246] }
+    ];
+
+    cardsRow1.forEach((c, i) => {
+      const x = M + i * (cW3 + 4);
+      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW3, 17, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text(c.label.toUpperCase(), x + 4, y + 4.8);
+      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(c.valor, x + 4, y + 11);
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+      doc.text(c.sub, x + 4, y + 15);
     });
 
-    y += 24;
+    y += 20;
+
+    // Linha 2: Atendente Destaque, Guichê Mais Ativo
+    const cW2 = (W - M * 2 - 4) / 2;
+    const cardsRow2 = [
+      { label: 'Atendente Destaque', valor: topAtend ? topAtend[0] : '—', sub: topAtend ? `${topAtend[1]} atendimentos` : 'Sem dados', cor: [22, 163, 74] },
+      { label: 'Guichê Mais Ativo', valor: topGuiche ? topGuiche[0] : '—', sub: topGuiche ? `${topGuiche[1]} atendimentos` : 'Sem dados', cor: [24, 95, 165] }
+    ];
+
+    cardsRow2.forEach((c, i) => {
+      const x = M + i * (cW2 + 4);
+      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW2, 17, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text(c.label.toUpperCase(), x + 4, y + 4.8);
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+      doc.text(c.valor, x + 4, y + 11);
+      doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+      doc.text(c.sub, x + 4, y + 15);
+    });
+
+    y += 22;
 
     // Tabela
     const cols = [
