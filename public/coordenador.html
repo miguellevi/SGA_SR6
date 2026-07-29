@@ -703,23 +703,15 @@ tr:hover td{background:var(--bg)}
   function converterHora(horaVal, criadoEm) {
     if (criadoEm) {
       try {
-        const d = new Date(criadoEm);
+        const str = typeof criadoEm === 'string' ? criadoEm.replace(' ', 'T') : criadoEm;
+        const isoStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+        const d = new Date(isoStr);
         if (!isNaN(d.getTime())) {
           return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza', hour12: false });
         }
       } catch(e) {}
     }
-    if (!horaVal) return '';
-    if (/^\d{2}:\d{2}(:\d{2})?$/.test(horaVal)) {
-      const [h, m, s] = horaVal.split(':').map(Number);
-      if (h >= 17) {
-        const d = new Date();
-        d.setUTCHours(h, m, s || 0, 0);
-        return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza', hour12: false });
-      }
-      return horaVal;
-    }
-    return horaVal;
+    return horaVal || '';
   }
 
   function mostrarUltimaChamada(c) {
@@ -774,52 +766,11 @@ tr:hover td{background:var(--bg)}
     return { inicio: fmt(hoje), fim: fmt(hoje) };
   }
 
-  function datasEntrePeriodo(row, inicio, fim) {
-    function parseD(val, criadoEm) {
-      if (criadoEm) {
-        const dt = new Date(criadoEm);
-        if (!isNaN(dt.getTime())) {
-          const str = dt.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
-          const p = str.split('/');
-          if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
-        }
-      }
-      if (val && typeof val === 'string') {
-        const s = val.trim();
-        if (s.includes('/')) {
-          const p = s.split('/');
-          if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
-        }
-        if (s.includes('-')) {
-          const clean = s.split('T')[0];
-          const p = clean.split('-');
-          if (p.length === 3) {
-            if (p[0].length === 4) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-            return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
-          }
-        }
-      }
-      return null;
-    }
-    const toDate = s => {
-      if (!s) return new Date();
-      if (s.includes('/')) { const [d,m,y] = s.split('/'); return new Date(y,m-1,d); }
-      return new Date(s);
-    };
-    const d = typeof row === 'object' ? parseD(row.data, row.criado_em) : parseD(row);
-    if (!d) return true;
-    const i = toDate(inicio);
-    i.setHours(0,0,0,0);
-    const f = toDate(fim);
-    f.setHours(23,59,59,999);
-    return d >= i && d <= f;
-  }
-
   async function carregarRelatorio() {
     const periodo = calcularPeriodo();
     if (!periodo) return;
     const res = await SGA.fetch(`/api/dados?recurso=relatorio&inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`);
-    relatorioData = (res.relatorio || []).filter(r => datasEntrePeriodo(r, periodo.inicio, periodo.fim));
+    relatorioData = res.relatorio || [];
     document.getElementById('st-hoje').textContent = relatorioData.length;
     renderResumo(relatorioData, periodo);
     renderRelatorio(relatorioData);
