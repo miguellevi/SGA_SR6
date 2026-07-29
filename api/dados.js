@@ -14,59 +14,59 @@ module.exports = async function handler(req, res) {
       const inicio = req.query.inicio || dataFortaleza();
       const fim    = req.query.fim    || dataFortaleza();
 
-      // Busca registros — filtra por data no JS pois o campo é string dd/mm/yyyy
+      // Busca registros
       const { data } = await supabase
         .from('relatorio')
         .select('*')
         .order('criado_em', { ascending: true });
 
-      // Helper flexível para converter datas
-      function parseData(val, criadoEm) {
+      function toIsoDate(val, criadoEm) {
         if (criadoEm) {
-          const dt = new Date(criadoEm);
-          if (!isNaN(dt.getTime())) {
-            const str = dt.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
-            const parts = str.split('/');
-            if (parts.length === 3) return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-          }
+          try {
+            const str = typeof criadoEm === 'string' ? criadoEm.replace(' ', 'T') : criadoEm;
+            const isoStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+            const dt = new Date(isoStr);
+            if (!isNaN(dt.getTime())) {
+              const dateStr = dt.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
+              const [d, m, y] = dateStr.split('/');
+              if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+          } catch (e) {}
         }
         if (val && typeof val === 'string') {
           const s = val.trim();
           if (s.includes('/')) {
-            const p = s.split('/');
-            if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+            const [d, m, y] = s.split('/');
+            if (d && m && y) return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
           }
           if (s.includes('-')) {
             const clean = s.split('T')[0];
             const p = clean.split('-');
             if (p.length === 3) {
-              if (p[0].length === 4) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-              return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+              if (p[0].length === 4) return clean;
+              return `${p[2]}-${p[1].padStart(2, '0')}-${p[0].padStart(2, '0')}`;
             }
           }
         }
         return null;
       }
 
-      function toDateParam(s) {
-        if (!s) return new Date();
+      function paramToIsoDate(s) {
+        if (!s) return '';
         if (s.includes('/')) {
-          const p = s.split('/');
-          return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+          const [d, m, y] = s.split('/');
+          return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
         }
-        return new Date(s);
+        return s.split('T')[0];
       }
 
-      const dIni = toDateParam(inicio);
-      dIni.setHours(0, 0, 0, 0);
-
-      const dFim = toDateParam(fim);
-      dFim.setHours(23, 59, 59, 999);
+      const isoIni = paramToIsoDate(inicio);
+      const isoFim = paramToIsoDate(fim);
 
       const filtrado = (data || []).filter(r => {
-        const d = parseData(r.data, r.criado_em);
-        if (!d) return false;
-        return d >= dIni && d <= dFim;
+        const rIso = toIsoDate(r.data, r.criado_em);
+        if (!rIso) return true;
+        return rIso >= isoIni && rIso <= isoFim;
       });
 
       return res.json({ ok: true, relatorio: filtrado, total: filtrado.length });
