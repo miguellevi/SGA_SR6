@@ -700,14 +700,26 @@ tr:hover td{background:var(--bg)}
     if (!res.ok) { document.getElementById('ch-erro').textContent=res.erro; document.getElementById('ch-erro').style.display='block'; }
   }
 
-  function converterHora(horaUTC) {
-    if (!horaUTC) return '';
-    try {
-      const [h, m, s] = horaUTC.split(':').map(Number);
-      const d = new Date();
-      d.setUTCHours(h, m, s || 0, 0);
-      return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza' });
-    } catch(e) { return horaUTC; }
+  function converterHora(horaVal, criadoEm) {
+    if (criadoEm) {
+      try {
+        const d = new Date(criadoEm);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza', hour12: false });
+        }
+      } catch(e) {}
+    }
+    if (!horaVal) return '';
+    if (/^\d{2}:\d{2}(:\d{2})?$/.test(horaVal)) {
+      const [h, m, s] = horaVal.split(':').map(Number);
+      if (h >= 17) {
+        const d = new Date();
+        d.setUTCHours(h, m, s || 0, 0);
+        return d.toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza', hour12: false });
+      }
+      return horaVal;
+    }
+    return horaVal;
   }
 
   function mostrarUltimaChamada(c) {
@@ -715,12 +727,12 @@ tr:hover td{background:var(--bg)}
     document.getElementById('ch-ul-pref').textContent    = c.preferencial?'★ PREFERENCIAL':'';
     document.getElementById('ch-ul-num').textContent     = 'Senha '+c.num;
     document.getElementById('ch-ul-guiche').textContent  = c.nomeGuiche;
-    document.getElementById('ch-ul-hora').textContent    = converterHora(c.hora);
+    document.getElementById('ch-ul-hora').textContent    = converterHora(c.hora, c.criado_em);
     const hbox=document.getElementById('ch-hist-box'), hlist=document.getElementById('ch-hist-list');
     hbox.style.display='block';
     const row=document.createElement('div');
     row.className='hist-row';
-    row.innerHTML=`<span><strong>${c.num}</strong>${c.preferencial?' <span class="badge badge-amber" style="font-size:10px">Pref</span>':''} → ${c.nomeGuiche}</span><span class="text-muted">${converterHora(c.hora)}</span>`;
+    row.innerHTML=`<span><strong>${c.num}</strong>${c.preferencial?' <span class="badge badge-amber" style="font-size:10px">Pref</span>':''} → ${c.nomeGuiche}</span><span class="text-muted">${converterHora(c.hora, c.criado_em)}</span>`;
     hlist.prepend(row);
     if(hlist.children.length>6) hlist.lastChild.remove();
   }
@@ -804,7 +816,7 @@ tr:hover td{background:var(--bg)}
             <td>${r.preferencial?'<span class="badge badge-amber">Preferencial</span>':'<span class="badge badge-gray">Normal</span>'}</td>
             <td>${r.nome_guiche}</td>
             <td>${r.atendente||'—'}</td>
-            <td>${r.hora}</td>
+            <td>${converterHora(r.hora, r.criado_em)}</td>
           </tr>`).join('');
   }
 
@@ -818,7 +830,7 @@ tr:hover td{background:var(--bg)}
 
   function exportarCSV() {
     const header='Senha,Tipo,Guichê,Atendente,Hora,Data\n';
-    const rows=relatorioData.map(r=>`${r.num},${r.preferencial?'Preferencial':'Normal'},${r.nome_guiche},${r.atendente},${r.hora},${r.data}`).join('\n');
+    const rows=relatorioData.map(r=>`${r.num},${r.preferencial?'Preferencial':'Normal'},${r.nome_guiche},${r.atendente},${converterHora(r.hora, r.criado_em)},${r.data}`).join('\n');
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([header+rows],{type:'text/csv;charset=utf-8;'}));
     a.download=`relatorio-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
@@ -862,7 +874,7 @@ tr:hover td{background:var(--bg)}
       if(y+6.5>282){doc.addPage();y=14;}
       if(i%2===0){doc.setFillColor(250,250,252);doc.rect(M,y,W-M*2,6.5,'F');}
       doc.setTextColor(30,30,30); cx=M+2;
-      [String(relatorioData.length-i),r.num,r.preferencial?'★ Pref':'Normal',r.nome_guiche,r.atendente||'—',r.hora]
+      [String(relatorioData.length-i),r.num,r.preferencial?'★ Pref':'Normal',r.nome_guiche,r.atendente||'—',converterHora(r.hora, r.criado_em)]
         .forEach((v,ci)=>{
           if(ci===2&&r.preferencial)doc.setTextColor(133,79,11); else doc.setTextColor(30,30,30);
           doc.text(v,cx,y+4.3,{maxWidth:cols[ci].w-2}); cx+=cols[ci].w;
