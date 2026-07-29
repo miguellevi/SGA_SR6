@@ -1,5 +1,6 @@
 const { supabase } = require('../lib/supabase');
 const { verificarAuth, somenteCoord } = require('./_auth');
+const { dataFortaleza } = require('../lib/horario');
 
 module.exports = async function handler(req, res) {
   try {
@@ -10,8 +11,8 @@ module.exports = async function handler(req, res) {
 
     // ── Relatório ──
     if (recurso === 'relatorio' && req.method === 'GET') {
-      const inicio = req.query.inicio || new Date().toLocaleDateString('pt-BR');
-      const fim    = req.query.fim    || new Date().toLocaleDateString('pt-BR');
+      const inicio = req.query.inicio || dataFortaleza();
+      const fim    = req.query.fim    || dataFortaleza();
 
       // Busca registros — filtra por data no JS pois o campo é string dd/mm/yyyy
       const { data } = await supabase
@@ -19,18 +20,52 @@ module.exports = async function handler(req, res) {
         .select('*')
         .order('criado_em', { ascending: true });
 
-      // Filtra pelo período
-      function toDate(s) {
-        const [d,m,y] = s.split('/');
-        return new Date(y, m-1, d);
+      // Helper flexível para converter datas
+      function parseData(val, criadoEm) {
+        if (criadoEm) {
+          const dt = new Date(criadoEm);
+          if (!isNaN(dt.getTime())) {
+            const str = dt.toLocaleDateString('pt-BR', { timeZone: 'America/Fortaleza' });
+            const parts = str.split('/');
+            if (parts.length === 3) return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+          }
+        }
+        if (val && typeof val === 'string') {
+          const s = val.trim();
+          if (s.includes('/')) {
+            const p = s.split('/');
+            if (p.length === 3) return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+          }
+          if (s.includes('-')) {
+            const clean = s.split('T')[0];
+            const p = clean.split('-');
+            if (p.length === 3) {
+              if (p[0].length === 4) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+              return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+            }
+          }
+        }
+        return null;
       }
-      const dIni = toDate(inicio);
-      const dFim = toDate(fim);
-      dFim.setHours(23,59,59);
+
+      function toDateParam(s) {
+        if (!s) return new Date();
+        if (s.includes('/')) {
+          const p = s.split('/');
+          return new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+        }
+        return new Date(s);
+      }
+
+      const dIni = toDateParam(inicio);
+      dIni.setHours(0, 0, 0, 0);
+
+      const dFim = toDateParam(fim);
+      dFim.setHours(23, 59, 59, 999);
 
       const filtrado = (data || []).filter(r => {
-        if (!r.data) return false;
-        const d = toDate(r.data);
+        const d = parseData(r.data, r.criado_em);
+        if (!d) return false;
         return d >= dIni && d <= dFim;
       });
 
