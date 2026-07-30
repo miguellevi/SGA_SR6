@@ -200,42 +200,89 @@
   // ── Sistema de Som e Voz ─────────────────────────────────────────────────────
   let audioCtx = null;
 
-  function falarChamada(num, guiche, pref) {
-    let playlist = ['bipe'];
-    
-    if (pref === true || pref === "true" || pref === 1) {
-        playlist.push('preferencial');
+  let vozesDisponiveis = [];
+  function carregarVozes() {
+    if ('speechSynthesis' in window) {
+      vozesDisponiveis = window.speechSynthesis.getVoices();
     }
-    playlist.push('senha');
-
-    let s = String(num).replace(/^[a-zA-Z]+/, ''); 
-    s = s.replace(/\D/g, ''); 
-    if (!s) s = '0';
-    for (let char of s) {
-        playlist.push(char);
-    }
-
-    playlist.push('guiche');
-
-    let gMatch = String(guiche).match(/\d+/); 
-    let g = gMatch ? gMatch[0] : '0';
-    g = parseInt(g, 10).toString();
-    for (let char of g) {
-        playlist.push(char);
-    }
-
-    tocarSequencia(playlist);
+  }
+  carregarVozes();
+  if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = carregarVozes;
   }
 
-  async function tocarSequencia(lista) {
-    for (const item of lista) {
-        await new Promise((resolve) => {
-            const som = new Audio(`/sons/${item}.mp3`);
-            som.playbackRate = 1.4;
-            som.onended = () => { resolve(); };
-            som.onerror = () => { resolve(); };
-            som.play().catch((err) => { resolve(); });
-        });
+  function falarChamada(num, guiche, pref) {
+    // 1. Toca o sinal sonoro (bipe)
+    const bipe = new Audio('/sons/bipe.mp3');
+    bipe.play().catch(e => console.log('Autoplay bipe:', e));
+
+    // Formata o número da senha para voz (ex: "N152" -> "N, 152", "152" -> "152")
+    let sStr = String(num || '').trim();
+    sStr = sStr.replace(/^([a-zA-Z]+)[-\s]?(\d+)$/, '$1, $2');
+
+    // Formata o guichê para voz (ex: "Guichê 05" -> "Guichê 5")
+    let gStr = String(guiche || '').trim();
+    let gMatch = gStr.match(/\d+/);
+    let gNum = gMatch ? parseInt(gMatch[0], 10) : gStr;
+    let guicheFalar = `Guichê ${gNum}`;
+
+    let isPref = (pref === true || pref === "true" || pref === 1);
+    let textoVoz = isPref
+      ? `Atendimento preferencial. Senha ${sStr}. ${guicheFalar}.`
+      : `Senha ${sStr}. ${guicheFalar}.`;
+
+    // Tenta usar Síntese de Voz Nativa (SpeechSynthesis)
+    if ('speechSynthesis' in window) {
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(textoVoz);
+          u.lang = 'pt-BR';
+          u.rate = 0.92;
+          u.pitch = 1.0;
+          u.volume = 1.0;
+
+          if (!vozesDisponiveis.length) vozesDisponiveis = window.speechSynthesis.getVoices();
+          const vozPt = vozesDisponiveis.find(v => v.lang.startsWith('pt') || v.lang.includes('pt-BR'));
+          if (vozPt) u.voice = vozPt;
+
+          window.speechSynthesis.speak(u);
+        } catch(err) {
+          console.warn('Erro SpeechSynthesis, fallback para MP3:', err);
+          tocarSequenciaMP3(num, guiche, isPref);
+        }
+      }, 550);
+    } else {
+      setTimeout(() => {
+        tocarSequenciaMP3(num, guiche, isPref);
+      }, 550);
+    }
+  }
+
+  async function tocarSequenciaMP3(num, guiche, isPref) {
+    let playlist = [];
+    if (isPref) playlist.push('preferencial');
+    playlist.push('senha');
+
+    let s = String(num).replace(/^[a-zA-Z]+/, '').replace(/\D/g, '');
+    if (!s) s = '0';
+    for (let char of s) {
+      playlist.push(char);
+    }
+
+    let gMatch = String(guiche).match(/\d+/);
+    let g = gMatch ? parseInt(gMatch[0], 10).toString() : '0';
+    for (let char of g) {
+      playlist.push(char);
+    }
+
+    for (const item of playlist) {
+      await new Promise((resolve) => {
+        const som = new Audio(`/sons/${item}.mp3`);
+        som.onended = resolve;
+        som.onerror = resolve;
+        som.play().catch(resolve);
+      });
     }
   }
 
