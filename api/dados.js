@@ -61,6 +61,38 @@ module.exports = async function handler(req, res) {
 
     const { recurso } = req.query;
 
+    // ── Fila de Espera ──
+    if (recurso === 'fila') {
+      if (req.method === 'GET') {
+        const { data, error } = await supabase
+          .from('fila')
+          .select('*')
+          .order('preferencial', { ascending: false })
+          .order('criado_em', { ascending: true });
+
+        if (error) return res.status(500).json({ ok: false, erro: error.message });
+        return res.json({ ok: true, fila: data || [] });
+      }
+
+      if (req.method === 'DELETE') {
+        const { id } = req.query;
+        if (!id) return res.status(400).json({ ok: false, erro: 'ID da senha é obrigatório' });
+        await supabase.from('fila').delete().eq('id', id);
+
+        const { data: filaAtual } = await supabase.from('fila').select('preferencial');
+        const filaNormalQtd = (filaAtual || []).filter(s => !s.preferencial).length;
+        const filaPrefQtd   = (filaAtual || []).filter(s =>  s.preferencial).length;
+
+        await supabase.from('eventos').insert({
+          tipo: 'fila_atualizada',
+          payload: JSON.stringify({ filaNormalQtd, filaPrefQtd }),
+          criado_em: new Date().toISOString()
+        });
+
+        return res.json({ ok: true });
+      }
+    }
+
     // ── Relatório ──
     if (recurso === 'relatorio' && req.method === 'GET') {
       const inicio = req.query.inicio || dataFortaleza();
