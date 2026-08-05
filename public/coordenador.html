@@ -114,7 +114,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .status-badge.inativo{background:var(--gray-light);color:var(--gray)}
 
 /* ── Chamar senha layout ── */
-.chamar-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.chamar-grid{display:grid;grid-template-columns:400px 1fr;gap:1.5rem;align-items:start}
 .fila-mini{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
 .fila-box{text-align:center;padding:.85rem;border-radius:var(--radius-sm)}
 .fila-box.normal{background:var(--blue-light)}
@@ -123,6 +123,60 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fila-box.normal .fila-num{color:var(--blue)}
 .fila-box.pref .fila-num{color:var(--amber)}
 .fila-lbl{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+
+/* Escolher Qual Senha Chamar (Fila Interativa) */
+.fila-interativa-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem}
+.fila-filters-bar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.fila-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text-muted);transition:all .15s}
+.fila-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.fila-pill.active.pill-blue{background:var(--blue);border-color:var(--blue)}
+.fila-pill.active.pill-amber{background:var(--amber);border-color:var(--amber)}
+.fila-search-wrap{position:relative;flex:1;min-width:180px}
+.fila-search-wrap input{width:100%;padding:7px 12px 7px 30px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;outline:none}
+.fila-search-wrap input:focus{border-color:var(--primary)}
+.fila-search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none}
+
+.fila-scroll-area{max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white)}
+.fila-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--gray-light);transition:background .15s;gap:.75rem}
+.fila-item:last-child{border-bottom:none}
+.fila-item:hover{background:var(--bg)}
+.fila-item-left{display:flex;align-items:center;gap:.85rem}
+.fila-pos{font-size:12px;font-weight:700;color:var(--text-muted);width:24px;text-align:center;flex-shrink:0}
+.fila-senha-badge{font-size:16px;font-weight:800;padding:4px 10px;border-radius:var(--radius-sm);font-family:monospace;letter-spacing:1px;flex-shrink:0}
+.fila-senha-badge.pref{background:var(--amber-light);color:var(--amber);border:1px solid rgba(133,79,11,.2)}
+.fila-senha-badge.normal{background:var(--blue-light);color:var(--blue);border:1px solid rgba(24,95,165,.2)}
+.fila-item-info{display:flex;flex-direction:column}
+.fila-item-tipo{font-size:13px;font-weight:600;color:var(--text)}
+.fila-item-espera{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px;margin-top:2px}
+.wait-tag{padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600}
+.wait-tag.rapido{background:var(--green-light);color:var(--green)}
+.wait-tag.medio{background:var(--amber-light);color:var(--amber)}
+.wait-tag.demorado{background:var(--red-light);color:var(--red)}
+.fila-item-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+
+/* Toast Feedback */
+.toast-banner{
+  position:fixed;top:1rem;right:1.5rem;z-index:999;
+  background:#1e293b;color:#fff;padding:12px 18px;border-radius:var(--radius);
+  box-shadow:0 10px 25px rgba(0,0,0,.2);display:flex;align-items:center;gap:.75rem;
+  font-size:14px;font-weight:500;animation:slideDown .25s ease-out;
+  max-width:380px;border-left:4px solid var(--primary);
+}
+.toast-banner.success{border-left-color:#22c55e}
+.toast-banner.error{border-left-color:#ef4444}
+@keyframes slideDown{from{opacity:0;transform:translateY(-15px)}to{opacity:1;transform:translateY(0)}}
+
+/* Modal Escolha de Guichê */
+.modal-guiche-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1rem;margin-bottom:1.25rem}
+.modal-guiche-card{
+  border:2px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;
+  cursor:pointer;transition:all .15s;text-align:left;background:var(--white);
+}
+.modal-guiche-card:hover{border-color:var(--primary);background:var(--primary-light)}
+.modal-guiche-card.auto-card{grid-column:1 / -1;border-color:var(--blue);background:var(--blue-light);text-align:center}
+.modal-guiche-card.auto-card:hover{background:#dbeafe}
+.mg-nome{font-size:13px;font-weight:700;color:var(--text)}
+.mg-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
 
 /* Última chamada */
 .ultima-chamada{text-align:center;padding:1rem 0}
@@ -143,6 +197,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .btn:hover{background:var(--gray-light)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.45;cursor:not-allowed}
 .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn-primary:hover{background:var(--primary-dark)}
 .btn-blue{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-blue:hover{background:#135090}
+.btn-success{background:var(--green);color:#fff;border-color:var(--green)}.btn-success:hover{background:#236e3e}
 .btn-danger{background:var(--red-light);color:var(--red);border-color:#f7c1c1}
 .btn-sm{padding:5px 11px;font-size:13px}.btn-full{width:100%}
 
@@ -184,7 +239,7 @@ tr:hover td{background:var(--bg)}
 /* ── Modal ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .modal-bg.open{display:flex}
-.modal{background:var(--white);border-radius:var(--radius);padding:1.75rem;width:100%;max-width:420px;box-shadow:var(--shadow-md)}
+.modal{background:var(--white);border-radius:var(--radius);padding:1.75rem;width:100%;max-width:440px;box-shadow:var(--shadow-md);max-height:90vh;overflow-y:auto}
 .modal h3{font-size:17px;font-weight:700;margin-bottom:1.25rem;color:var(--text)}
 
 /* ── Utils ── */
@@ -293,9 +348,11 @@ tr:hover td{background:var(--bg)}
 }
 
 /* ── Responsive ── */
+@media(max-width:1100px){
+  .chamar-grid{grid-template-columns:1fr}
+}
 @media(max-width:900px){
   .stats-grid{grid-template-columns:1fr 1fr}
-  .chamar-grid{grid-template-columns:1fr}
   .guiches-grid{grid-template-columns:1fr 1fr}
 }
 @media(max-width:640px){
@@ -314,6 +371,9 @@ tr:hover td{background:var(--bg)}
 </style>
 </head>
 <body>
+
+<!-- Toast Feedback Container -->
+<div id="toast-container"></div>
 
 <!-- Overlay mobile -->
 <div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
@@ -404,8 +464,53 @@ tr:hover td{background:var(--bg)}
     <div class="pane active" id="pane-chamar">
       <div class="chamar-grid">
 
-        <!-- Coluna esquerda -->
+        <!-- Coluna esquerda: Controles Rápidos e Numeração -->
         <div>
+          <!-- Fila + Chamar Próxima -->
+          <div class="card mb-2">
+            <div class="card-title">Chamada Rápida da Próxima Senha</div>
+            <div class="fila-mini">
+              <div class="fila-box normal">
+                <div class="fila-num" id="ch-normal">0</div>
+                <div class="fila-lbl">Normal em espera</div>
+              </div>
+              <div class="fila-box pref">
+                <div class="fila-num" id="ch-pref">0</div>
+                <div class="fila-lbl">Pref. em espera</div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:.75rem">
+              <label>Guichê Destino</label>
+              <select id="ch-guiche-sel"><option value="">— Escolha um guichê —</option></select>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:.5rem">
+              <button class="btn btn-primary btn-full" id="btn-ch-chamar" onclick="coordChamar()" style="padding:12px;font-size:14px;font-weight:600" disabled>
+                🎯 Chamar Próxima Senha (Ordem Prioritária)
+              </button>
+              <button class="btn btn-blue btn-full" id="btn-ch-auto" onclick="coordChamarAuto()" style="padding:10px;font-size:13px;font-weight:600">
+                🤖 Chamar Próxima (Guichê Automático)
+              </button>
+            </div>
+
+            <div id="ch-erro" class="alert alert-error mt-1" style="display:none"></div>
+          </div>
+
+          <!-- Chamar por Digitação Direta -->
+          <div class="card mb-2">
+            <div class="card-title">📢 Chamar por Digitação Direta</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">
+              Digite o número exato da senha para chamá-la diretamente:
+            </div>
+            <div style="display:flex;gap:.5rem">
+              <input type="text" id="input-senha-direta" placeholder="Ex: P003 ou 014" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-weight:700;text-transform:uppercase;font-size:15px;text-align:center">
+              <button class="btn btn-primary" onclick="chamarSenhaDigitada()" style="font-size:13px;font-weight:600">
+                Chamar
+              </button>
+            </div>
+          </div>
+
           <!-- Numeração -->
           <div class="card mb-2" id="card-numeracao">
             <div class="card-title">Numeração das senhas</div>
@@ -428,32 +533,7 @@ tr:hover td{background:var(--bg)}
             <div id="contador-msg" style="font-size:12px;margin-top:6px;min-height:16px;text-align:center"></div>
           </div>
 
-          <!-- Fila + Chamar -->
-          <div class="card">
-            <div class="card-title">Fila de espera</div>
-            <div class="fila-mini">
-              <div class="fila-box normal">
-                <div class="fila-num" id="ch-normal">0</div>
-                <div class="fila-lbl">Normal</div>
-              </div>
-              <div class="fila-box pref">
-                <div class="fila-num" id="ch-pref">0</div>
-                <div class="fila-lbl">Preferencial</div>
-              </div>
-            </div>
-            <div class="form-group" style="margin-bottom:.75rem">
-              <label>Guichê destino</label>
-              <select id="ch-guiche-sel"><option value="">— Escolha um guichê —</option></select>
-            </div>
-            <button class="btn btn-primary btn-full" id="btn-ch-chamar" onclick="coordChamar()" style="padding:13px;font-size:15px;font-weight:600" disabled>
-              🎯 Chamar próxima senha
-            </button>
-            <div id="ch-erro" class="alert alert-error mt-1" style="display:none"></div>
-          </div>
-        </div>
-
-        <!-- Coluna direita -->
-        <div>
+          <!-- Última chamada -->
           <div class="card mb-2" id="ch-ultima-box" style="display:none">
             <div class="card-title">Última chamada</div>
             <div class="ultima-chamada">
@@ -463,11 +543,54 @@ tr:hover td{background:var(--bg)}
               <div class="uc-hora"   id="ch-ul-hora"></div>
             </div>
           </div>
+
+          <!-- Histórico -->
           <div class="card" id="ch-hist-box" style="display:none">
-            <div class="card-title">Histórico de hoje</div>
+            <div class="card-title">Histórico recente de hoje</div>
             <div id="ch-hist-list"></div>
           </div>
         </div>
+
+        <!-- Coluna direita: Escolher Qual Senha Chamar (Fila Interativa) -->
+        <div>
+          <div class="card">
+            <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>📋 Escolher Qual Senha Chamar</span>
+              <span id="fila-total-badge" class="badge badge-orange" style="font-size:11px">0 aguardando</span>
+            </div>
+
+            <!-- Barra de Filtros e Busca da Fila -->
+            <div class="fila-interativa-header">
+              <div class="fila-filters-bar">
+                <button class="fila-pill active" id="pill-todas" onclick="setFiltroFila('todas')">Todas as Senhas</button>
+                <button class="fila-pill" id="pill-pref" onclick="setFiltroFila('pref')">⭐ Preferenciais</button>
+                <button class="fila-pill" id="pill-normal" onclick="setFiltroFila('normal')">📋 Normais</button>
+              </div>
+
+              <div class="fila-search-wrap">
+                <span class="fila-search-icon">🔍</span>
+                <input type="text" id="busca-fila-input" placeholder="Buscar por número ou tipo..." oninput="filtrarFilaLocal()">
+              </div>
+            </div>
+
+            <!-- Lista Rolável de Senhas em Espera -->
+            <div class="fila-scroll-area" id="fila-scroll-container">
+              <div id="fila-lista-conteudo">
+                <div style="padding:2.5rem 1rem;text-align:center;color:var(--text-muted)">
+                  <div style="font-size:28px;margin-bottom:8px">⏳</div>
+                  <strong>Nenhuma senha na fila de espera</strong>
+                  <div style="font-size:12px;margin-top:4px">Novas senhas emitidas no totem aparecerão automaticamente aqui.</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;font-size:12px;color:var(--text-muted)">
+              <span>💡 Clique em <strong>"🎯 Chamar"</strong> ao lado de qualquer senha para enviá-la para o guichê desejado.</span>
+              <button class="btn btn-sm" onclick="carregarFilaDireta()" title="Recarregar Fila">🔄 Atualizar Fila</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -491,10 +614,10 @@ tr:hover td{background:var(--bg)}
         </div>
       </div>
 
-      <!-- 1. KPIs (Indicadores de Desempenho) -->
+      <!-- 1. KPIs -->
       <div id="rel-kpis" class="kpi-cards-grid"></div>
 
-      <!-- 2. Gráficos de Tendência e Horários de Pico -->
+      <!-- 2. Gráficos -->
       <div class="charts-grid">
         <div class="chart-box">
           <div class="card-title">📈 Horários de Pico (Atendimentos por Hora)</div>
@@ -579,6 +702,26 @@ tr:hover td{background:var(--bg)}
 </div><!-- /main -->
 
 <!-- ═══ MODAIS ═══ -->
+
+<!-- Modal Escolher Guichê para Chamada Específica -->
+<div class="modal-bg" id="modal-escolha-guiche">
+  <div class="modal">
+    <h3>🎯 Chamar Senha <span id="modal-ch-num" style="color:var(--primary)">P001</span></h3>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:.5rem">
+      Tipo: <strong id="modal-ch-tipo" style="color:var(--text)">Idoso</strong> • Escolha o guichê de destino:
+    </div>
+
+    <div class="modal-guiche-grid" id="modal-guiche-cards-list">
+      <!-- Cards de guichês preenchidos via JS -->
+    </div>
+
+    <div class="flex gap-1" style="justify-content:flex-end">
+      <button class="btn" onclick="fecharModal('modal-escolha-guiche')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Usuário -->
 <div class="modal-bg" id="modal-usuario">
   <div class="modal">
     <h3>Novo usuário</h3>
@@ -600,6 +743,7 @@ tr:hover td{background:var(--bg)}
   </div>
 </div>
 
+<!-- Modal Tipo de Senha -->
 <div class="modal-bg" id="modal-tipo">
   <div class="modal">
     <h3>Novo tipo de senha</h3>
@@ -624,7 +768,6 @@ tr:hover td{background:var(--bg)}
   document.getElementById('perfil-label').textContent = SGA.perfil;
   document.getElementById('avatar-inicial').textContent = nome.charAt(0).toUpperCase();
 
-  // Data no topbar
   function atualizarData() {
     const d = new Date();
     document.getElementById('topbar-data').textContent =
@@ -632,7 +775,6 @@ tr:hover td{background:var(--bg)}
   }
   atualizarData();
 
-  // Restringe abas para perfil acolhimento
   if (!isCoordCompleto) {
     document.getElementById('card-numeracao').style.display = 'none';
     document.getElementById('nav-usuarios').style.display = 'none';
@@ -640,7 +782,6 @@ tr:hover td{background:var(--bg)}
     document.getElementById('nav-section-admin').style.display = 'none';
   }
 
-  // ── Sidebar mobile ──
   function abrirSidebar() {
     document.getElementById('sidebar').classList.add('open');
     document.getElementById('overlay').classList.add('open');
@@ -650,7 +791,6 @@ tr:hover td{background:var(--bg)}
     document.getElementById('overlay').classList.remove('open');
   }
 
-  // ── Navegação por panes ──
   const panesTitles = {
     chamar:'Chamar Senha', guiches:'Guichês',
     relatorio:'Relatório', usuarios:'Usuários', tipos:'Tipos de Senha'
@@ -666,50 +806,68 @@ tr:hover td{background:var(--bg)}
     if(nome==='relatorio') carregarRelatorio();
     if(nome==='usuarios')  carregarUsuarios();
     if(nome==='tipos')     carregarTipos();
+    if(nome==='chamar')    carregarFilaDireta();
   }
 
-  let guichesData = [], relatorioData = [];
+  let guichesData = [], relatorioData = [], filaData = [];
+  let filtroFilaAtivo = 'todas';
+  let senhaSelecionada = null;
 
-  // ── Realtime ──
+  // ── Toast Banner ──
+  function mostrarToast(mensagem, tipo = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast-banner ${tipo}`;
+    toast.innerHTML = `<span>${tipo === 'success' ? '✅' : '⚠️'}</span> <div>${mensagem}</div>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      toast.style.transition = 'all .3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  }
+
+  // ── Realtime & Eventos ──
   SGA.on('estado_inicial', d => {
     guichesData = d.guiches || [];
+    filaData = d.fila || [];
     renderGuiches(guichesData);
-    atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
     popularSelectGuiches(guichesData);
+    atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
     atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
     atualizarProximas(d.contadorNormal, d.contadorPref, d.contadorBaseNormal, d.contadorBasePref);
+    renderFilaEspera(filaData);
     carregarRelatorio();
   });
 
   SGA.on('nova_chamada', c => {
     mostrarUltimaChamada(c);
-    fetch('/api/estado').then(r=>r.json()).then(d => {
-      guichesData = d.guiches || [];
-      renderGuiches(guichesData);
-      popularSelectGuiches(guichesData);
-      atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
-      atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
-      carregarRelatorio();
-    });
+    mostrarToast(`Senha <strong>${c.num}</strong> chamada para o <strong>${c.nomeGuiche}</strong>`, 'success');
+    atualizarTudo();
   });
 
   SGA.on('guiches_atualizados', () => {
-    fetch('/api/estado').then(r=>r.json()).then(d => {
-      guichesData = d.guiches || [];
-      renderGuiches(guichesData);
-      popularSelectGuiches(guichesData);
-      atualizarStats(null, null, guichesData);
-    });
+    atualizarTudo();
   });
 
   SGA.on('fila_atualizada', d => {
-    atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
-    atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
+    if (d && Array.isArray(d.fila)) {
+      filaData = d.fila;
+      renderFilaEspera(filaData);
+    } else {
+      carregarFilaDireta();
+    }
+    atualizarStats(d?.filaNormalQtd, d?.filaPrefQtd, guichesData);
+    atualizarChFila(d?.filaNormalQtd, d?.filaPrefQtd);
   });
 
   SGA.on('fila_resetada', () => {
+    filaData = [];
+    renderFilaEspera([]);
     atualizarStats(0, 0, guichesData);
     atualizarChFila(0, 0);
+    mostrarToast('Fila resetada com sucesso.', 'info');
     carregarRelatorio();
   });
 
@@ -722,11 +880,11 @@ tr:hover td{background:var(--bg)}
     if (normal !== null && normal !== undefined) {
       document.getElementById('st-normal').textContent = normal;
       document.getElementById('st-pref').textContent   = pref;
-      // Badge na sidebar
       const total = normal + pref;
       const badge = document.getElementById('badge-fila');
       badge.style.display = total > 0 ? 'inline' : 'none';
       badge.textContent = total;
+      document.getElementById('fila-total-badge').textContent = `${total} aguardando`;
     }
     if (guiches) {
       document.getElementById('st-ativos').textContent = guiches.filter(g => g.ativo).length;
@@ -767,6 +925,7 @@ tr:hover td{background:var(--bg)}
     if (!nome) return;
     await SGA.fetch('/api/guiche?acao=nome', { method: 'PATCH', body: { guicheId: id, nome } });
     cancelarEditGuiche(id);
+    atualizarTudo();
   }
 
   // ── Numeração ──
@@ -782,9 +941,10 @@ tr:hover td{background:var(--bg)}
   }
 
   ['ini-normal','ini-pref'].forEach(id => {
-    document.getElementById(id).addEventListener('input', () => {
-      document.getElementById(id).dataset.touched = '1';
-    });
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', () => { el.dataset.touched = '1'; });
+    }
   });
 
   async function definirContador() {
@@ -802,12 +962,14 @@ tr:hover td{background:var(--bg)}
     } else { msg.style.color='var(--red)'; msg.textContent=res.erro; }
   }
 
-  // ── Chamar Senha ──
+  // ── Chamar Próxima da Fila ──
   function atualizarChFila(normal, pref) {
     document.getElementById('ch-normal').textContent = normal;
     document.getElementById('ch-pref').textContent   = pref;
     const sel = document.getElementById('ch-guiche-sel');
-    document.getElementById('btn-ch-chamar').disabled = (normal+pref)===0 || !sel.value;
+    const total = (normal || 0) + (pref || 0);
+    document.getElementById('btn-ch-chamar').disabled = total === 0 || !sel.value;
+    document.getElementById('btn-ch-auto').disabled   = total === 0;
   }
 
   function popularSelectGuiches(guiches) {
@@ -819,18 +981,269 @@ tr:hover td{background:var(--bg)}
       ).join('');
     if (val) sel.value = val;
     sel.onchange = () => {
-      const n = parseInt(document.getElementById('ch-normal').textContent);
-      const p = parseInt(document.getElementById('ch-pref').textContent);
+      const n = parseInt(document.getElementById('ch-normal').textContent) || 0;
+      const p = parseInt(document.getElementById('ch-pref').textContent) || 0;
       document.getElementById('btn-ch-chamar').disabled = (n+p)===0 || !sel.value;
     };
   }
 
   async function coordChamar() {
     const guicheId = parseInt(document.getElementById('ch-guiche-sel').value);
-    if (!guicheId) return;
+    if (!guicheId) {
+      mostrarToast('Por favor, selecione um guichê destino primeiro.', 'error');
+      return;
+    }
     document.getElementById('ch-erro').style.display='none';
     const res = await SGA.fetch('/api/chamar', { method:'POST', body:{ guicheId } });
-    if (!res.ok) { document.getElementById('ch-erro').textContent=res.erro; document.getElementById('ch-erro').style.display='block'; }
+    if (!res.ok) {
+      document.getElementById('ch-erro').textContent = res.erro;
+      document.getElementById('ch-erro').style.display = 'block';
+      mostrarToast(res.erro, 'error');
+    } else {
+      atualizarTudo();
+    }
+  }
+
+  async function coordChamarAuto() {
+    document.getElementById('ch-erro').style.display='none';
+    const res = await SGA.fetch('/api/chamar', { method:'POST', body:{ auto: true } });
+    if (!res.ok) {
+      document.getElementById('ch-erro').textContent = res.erro;
+      document.getElementById('ch-erro').style.display = 'block';
+      mostrarToast(res.erro, 'error');
+    } else {
+      atualizarTudo();
+    }
+  }
+
+  // ── Chamar por Digitação Direta ──
+  async function chamarSenhaDigitada() {
+    const input = document.getElementById('input-senha-direta');
+    const valor = (input.value || '').trim().toUpperCase();
+    if (!valor) {
+      mostrarToast('Digite o número da senha (ex: P002 ou 014)', 'error');
+      return;
+    }
+
+    const itemFila = filaData.find(s => s.num && s.num.toUpperCase() === valor);
+    if (itemFila) {
+      abrirModalEscolhaGuiche(itemFila);
+      input.value = '';
+      return;
+    }
+
+    const guicheId = parseInt(document.getElementById('ch-guiche-sel').value) || null;
+    const body = { senhaNum: valor };
+    if (guicheId) body.guicheId = guicheId;
+    else body.auto = true;
+
+    const res = await SGA.fetch('/api/chamar', { method: 'POST', body });
+    if (res.ok) {
+      input.value = '';
+      atualizarTudo();
+    } else {
+      mostrarToast(res.erro || 'Senha não encontrada', 'error');
+    }
+  }
+
+  // Permite pressionar Enter no campo de digitação direta
+  document.getElementById('input-senha-direta').addEventListener('keydown', e => {
+    if (e.key === 'Enter') chamarSenhaDigitada();
+  });
+
+  // ── Escolher Qual Senha Chamar (Fila Interativa) ──
+  function calcularTempoEspera(criadoEm) {
+    if (!criadoEm) return { texto: 'Recente', min: 0, tag: 'rapido' };
+    try {
+      const dt = new Date(criadoEm);
+      const agora = new Date();
+      const diffMs = agora - dt;
+      const min = Math.max(0, Math.floor(diffMs / 60000));
+      
+      let tag = 'rapido';
+      if (min >= 15) tag = 'demorado';
+      else if (min >= 8) tag = 'medio';
+
+      if (min < 1) return { texto: 'Menos de 1 min', min, tag: 'rapido' };
+      if (min === 1) return { texto: '1 min', min, tag: 'rapido' };
+      if (min < 60) return { texto: `${min} min`, min, tag };
+      const horas = Math.floor(min / 60);
+      const restMin = min % 60;
+      return { texto: `${horas}h ${restMin}m`, min, tag: 'demorado' };
+    } catch(e) {
+      return { texto: '—', min: 0, tag: 'rapido' };
+    }
+  }
+
+  function setFiltroFila(tipo) {
+    filtroFilaAtivo = tipo;
+    document.querySelectorAll('.fila-pill').forEach(p => p.classList.remove('active', 'pill-blue', 'pill-amber'));
+    const btn = document.getElementById('pill-' + tipo);
+    if (btn) {
+      btn.classList.add('active');
+      if (tipo === 'normal') btn.classList.add('pill-blue');
+      if (tipo === 'pref')   btn.classList.add('pill-amber');
+    }
+    filtrarFilaLocal();
+  }
+
+  function filtrarFilaLocal() {
+    const termo = (document.getElementById('busca-fila-input').value || '').trim().toLowerCase();
+    
+    let lista = [...filaData];
+    if (filtroFilaAtivo === 'pref')   lista = lista.filter(s => s.preferencial);
+    if (filtroFilaAtivo === 'normal') lista = lista.filter(s => !s.preferencial);
+
+    if (termo) {
+      lista = lista.filter(s => {
+        const numMatch = (s.num || '').toLowerCase().includes(termo);
+        const tipoMatch = (s.tipo_label || '').toLowerCase().includes(termo);
+        return numMatch || tipoMatch;
+      });
+    }
+
+    renderFilaEspera(lista);
+  }
+
+  function renderFilaEspera(lista) {
+    const container = document.getElementById('fila-lista-conteudo');
+    if (!lista || lista.length === 0) {
+      container.innerHTML = `
+        <div style="padding:2.5rem 1rem;text-align:center;color:var(--text-muted)">
+          <div style="font-size:32px;margin-bottom:8px">✨</div>
+          <strong style="font-size:14px">Nenhuma senha nesta visualização</strong>
+          <div style="font-size:12px;margin-top:4px">Não há senhas aguardando atendimento com os filtros atuais.</div>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = lista.map((s, idx) => {
+      const isPref = s.preferencial;
+      const espera = calcularTempoEspera(s.criado_em);
+      const horaStr = s.criado_em ? new Date(s.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+
+      return `
+        <div class="fila-item" id="fila-item-${s.id}">
+          <div class="fila-item-left">
+            <span class="fila-pos">${idx + 1}º</span>
+            <span class="fila-senha-badge ${isPref ? 'pref' : 'normal'}">${s.num}</span>
+            <div class="fila-item-info">
+              <div class="fila-item-tipo">
+                ${isPref ? '⭐ ' : ''}${s.tipo_label || (isPref ? 'Preferencial' : 'Normal')}
+              </div>
+              <div class="fila-item-espera">
+                <span>Emitida às ${horaStr || '—'}</span>
+                <span>•</span>
+                <span class="wait-tag ${espera.tag}">⏳ ${espera.texto}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="fila-item-actions">
+            <button class="btn btn-sm btn-primary" onclick="cliqueChamarSenhaFila(${s.id})" title="Chamar esta senha">
+              🎯 Chamar
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="cancelarSenhaFila(${s.id}, '${s.num}')" title="Remover da fila se o cidadão desistiu">
+              ✕
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  async function carregarFilaDireta() {
+    try {
+      const res = await SGA.fetch('/api/dados?recurso=fila');
+      if (res.ok && Array.isArray(res.fila)) {
+        filaData = res.fila;
+        filtrarFilaLocal();
+        const norm = filaData.filter(s => !s.preferencial).length;
+        const pref = filaData.filter(s => s.preferencial).length;
+        atualizarStats(norm, pref, guichesData);
+        atualizarChFila(norm, pref);
+      }
+    } catch(e) { console.error('Erro ao carregar fila:', e); }
+  }
+
+  function cliqueChamarSenhaFila(senhaId) {
+    const item = filaData.find(s => s.id === senhaId);
+    if (!item) return;
+
+    const guicheSelVal = document.getElementById('ch-guiche-sel').value;
+    if (guicheSelVal) {
+      // Se já escolheu um guichê no dropdown principal, chama diretamente para ele
+      executarChamadaSenha(item.id, item.num, parseInt(guicheSelVal), false);
+    } else {
+      // Abre modal interativo para escolher o guichê de destino
+      abrirModalEscolhaGuiche(item);
+    }
+  }
+
+  function abrirModalEscolhaGuiche(item) {
+    senhaSelecionada = item;
+    document.getElementById('modal-ch-num').textContent = item.num;
+    document.getElementById('modal-ch-num').style.color = item.preferencial ? 'var(--amber)' : 'var(--blue)';
+    document.getElementById('modal-ch-tipo').textContent = item.tipo_label || (item.preferencial ? 'Preferencial' : 'Normal');
+
+    const cardsContainer = document.getElementById('modal-guiche-cards-list');
+    const ativos = guichesData.filter(g => g.ativo);
+
+    let html = `
+      <div class="modal-guiche-card auto-card" onclick="executarChamadaSenha(${item.id}, '${item.num}', null, true)">
+        <div class="mg-nome">🤖 Distribuir Automaticamente</div>
+        <div class="mg-sub">Sistema direciona para o guichê livre com menos atendimentos</div>
+      </div>
+    `;
+
+    if (ativos.length === 0) {
+      html += `<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--text-muted)">Nenhum guichê ativo no momento.</div>`;
+    } else {
+      html += ativos.map(g => {
+        const livre = !g.senha_atual;
+        return `
+          <div class="modal-guiche-card" onclick="executarChamadaSenha(${item.id}, '${item.num}', ${g.id}, false)">
+            <div class="mg-nome">🖥️ ${g.nome}</div>
+            <div class="mg-sub">${g.atendente ? '👤 ' + g.atendente : 'Sem atendente'} • <strong style="color:${livre ? 'var(--green)' : 'var(--amber)'}">${livre ? 'Livre' : 'Ocupado ('+g.senha_atual+')'}</strong></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    cardsContainer.innerHTML = html;
+    document.getElementById('modal-escolha-guiche').classList.add('open');
+  }
+
+  async function executarChamadaSenha(senhaId, senhaNum, guicheId, isAuto) {
+    fecharModal('modal-escolha-guiche');
+    const body = { senhaId, senhaNum };
+    if (isAuto || !guicheId) body.auto = true;
+    else body.guicheId = guicheId;
+
+    try {
+      const res = await SGA.fetch('/api/chamar', { method: 'POST', body });
+      if (res.ok) {
+        atualizarTudo();
+      } else {
+        mostrarToast(res.erro || 'Falha ao chamar senha', 'error');
+      }
+    } catch(e) {
+      mostrarToast('Erro de conexão ao chamar senha: ' + e.message, 'error');
+    }
+  }
+
+  async function cancelarSenhaFila(senhaId, senhaNum) {
+    if (!confirm(`Deseja remover a senha ${senhaNum} da fila de espera?`)) return;
+    try {
+      const res = await SGA.fetch(`/api/dados?recurso=fila&id=${senhaId}`, { method: 'DELETE' });
+      if (res.ok) {
+        mostrarToast(`Senha ${senhaNum} removida da fila.`, 'info');
+        atualizarTudo();
+      } else {
+        mostrarToast(res.erro || 'Erro ao remover senha', 'error');
+      }
+    } catch(e) {
+      mostrarToast('Erro de conexão: ' + e.message, 'error');
+    }
   }
 
   function converterHora(horaVal, criadoEm) {
@@ -858,425 +1271,324 @@ tr:hover td{background:var(--bg)}
     const row=document.createElement('div');
     row.className='hist-row';
     row.innerHTML=`<span><strong>${c.num}</strong>${c.preferencial?' <span class="badge badge-amber" style="font-size:10px">Pref</span>':''} → ${c.nomeGuiche}</span><span class="text-muted">${converterHora(c.hora, c.criado_em)}</span>`;
-    hlist.prepend(row);
-    if(hlist.children.length>6) hlist.lastChild.remove();
+    hlist.insertBefore(row, hlist.firstChild);
+    while (hlist.children.length > 8) hlist.removeChild(hlist.lastChild);
   }
 
-  // ── Relatório ──
-  let periodoAtual = 'hoje';
+  // ── Relatório, KPIs e Gráficos Chart.js ──
   let chartPicoInstance = null;
   let chartAtendentesInstance = null;
-  let filteredRelatorioData = [];
-
-  function filtrarPeriodo(p) {
-    periodoAtual = p;
-    ['hoje','semana','mes','custom'].forEach(id => {
-      const btn = document.getElementById('fp-'+id);
-      if (btn) {
-        btn.classList.toggle('btn-primary', id === p);
-        if (id !== 'hoje') btn.classList.toggle('btn-sm', true);
-      }
-    });
-    const cd = document.getElementById('custom-dates');
-    if (cd) cd.style.display = p === 'custom' ? 'flex' : 'none';
-    if (p !== 'custom') carregarRelatorio();
-  }
-
-  function calcularPeriodo() {
-    const hoje = new Date();
-    const fmt = d => d.toLocaleDateString('pt-BR');
-    if (periodoAtual === 'hoje') return { inicio: fmt(hoje), fim: fmt(hoje) };
-    if (periodoAtual === 'semana') {
-      const seg = new Date(hoje);
-      seg.setDate(hoje.getDate() - hoje.getDay() + (hoje.getDay() === 0 ? -6 : 1));
-      return { inicio: fmt(seg), fim: fmt(hoje) };
-    }
-    if (periodoAtual === 'mes') {
-      return { inicio: fmt(new Date(hoje.getFullYear(), hoje.getMonth(), 1)), fim: fmt(hoje) };
-    }
-    if (periodoAtual === 'custom') {
-      const ini = document.getElementById('data-inicio').value;
-      const fim = document.getElementById('data-fim').value;
-      if (!ini || !fim) return null;
-      const fmtInput = v => v.split('-').reverse().join('/');
-      return { inicio: fmtInput(ini), fim: fmtInput(fim) };
-    }
-    return { inicio: fmt(hoje), fim: fmt(hoje) };
-  }
 
   async function carregarRelatorio() {
-    const periodo = calcularPeriodo();
-    if (!periodo) return;
-    const res = await SGA.fetch(`/api/dados?recurso=relatorio&inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`);
-    relatorioData = res.relatorio || [];
-    document.getElementById('st-hoje').textContent = relatorioData.length;
-    popularFiltrosDinamicos(relatorioData);
-    filtrarRel();
+    let ini = document.getElementById('data-inicio').value;
+    let fim = document.getElementById('data-fim').value;
+
+    const btnAtivo = document.querySelector('.periodo-btns .btn-primary');
+    const hoje = new Date();
+    const formatYMD = d => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    if (btnAtivo && btnAtivo.id === 'fp-hoje') {
+      ini = fim = formatYMD(hoje);
+    } else if (btnAtivo && btnAtivo.id === 'fp-semana') {
+      const d = new Date(hoje);
+      const diaSemana = d.getDay();
+      d.setDate(d.getDate() - diaSemana);
+      ini = formatYMD(d);
+      fim = formatYMD(hoje);
+    } else if (btnAtivo && btnAtivo.id === 'fp-mes') {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      ini = formatYMD(d);
+      fim = formatYMD(hoje);
+    }
+
+    let url = '/api/dados?recurso=relatorio';
+    if (ini) url += `&inicio=${ini}`;
+    if (fim) url += `&fim=${fim}`;
+
+    try {
+      const res = await SGA.fetch(url);
+      if (res.ok) {
+        relatorioData = res.relatorio || [];
+        
+        const hojeYMD = formatYMD(hoje);
+        const atendHoje = relatorioData.filter(r => {
+          const rDate = r.criado_em ? formatYMD(new Date(r.criado_em)) : r.data;
+          return rDate === hojeYMD || r.data === hoje.toLocaleDateString('pt-BR');
+        });
+        document.getElementById('st-hoje').textContent = atendHoje.length;
+
+        popularFiltrosDropdown(relatorioData);
+        atualizarKPIs(relatorioData);
+        atualizarGraficos(relatorioData);
+        filtrarRel();
+      }
+    } catch(e) { console.error(e); }
   }
 
-  function popularFiltrosDinamicos(rows) {
+  function popularFiltrosDropdown(data) {
+    const atendentes = Array.from(new Set(data.map(r => r.atendente).filter(Boolean))).sort();
     const selAtend = document.getElementById('filtro-atendente');
-    const selGuiche = document.getElementById('filtro-guiche');
-    if (!selAtend || !selGuiche) return;
-
     const valAtend = selAtend.value;
-    const valGuiche = selGuiche.value;
-
-    const atendentes = [...new Set(rows.map(r => r.atendente).filter(Boolean))].sort();
-    const guiches = [...new Set(rows.map(r => r.nome_guiche).filter(Boolean))].sort();
-
     selAtend.innerHTML = '<option value="">👤 Todos os Atendentes</option>' +
       atendentes.map(a => `<option value="${a}">${a}</option>`).join('');
+    if (valAtend) selAtend.value = valAtend;
 
+    const guiches = Array.from(new Set(data.map(r => r.nome_guiche).filter(Boolean))).sort();
+    const selGuiche = document.getElementById('filtro-guiche');
+    const valGuiche = selGuiche.value;
     selGuiche.innerHTML = '<option value="">🖥️ Todos os Guichês</option>' +
       guiches.map(g => `<option value="${g}">${g}</option>`).join('');
-
-    if (valAtend && atendentes.includes(valAtend)) selAtend.value = valAtend;
-    if (valGuiche && guiches.includes(valGuiche)) selGuiche.value = valGuiche;
+    if (valGuiche) selGuiche.value = valGuiche;
   }
 
-  function filtrarRel() {
-    const q = (document.getElementById('filtro-rel')?.value || '').toLowerCase().trim();
-    const selAtend = document.getElementById('filtro-atendente')?.value || '';
-    const selGuiche = document.getElementById('filtro-guiche')?.value || '';
-    const selTipo = document.getElementById('filtro-tipo')?.value || '';
+  function atualizarKPIs(data) {
+    const total = data.length;
+    const pref = data.filter(r => r.preferencial).length;
+    const norm = total - pref;
+    const pctPref = total > 0 ? Math.round((pref / total) * 100) : 0;
 
-    filteredRelatorioData = relatorioData.filter(r => {
-      const horaFmt = converterHora(r.hora, r.criado_em);
-      const matchText = !q || (r.num||'').toLowerCase().includes(q) ||
-                        (r.nome_guiche||'').toLowerCase().includes(q) ||
-                        (r.atendente||'').toLowerCase().includes(q) ||
-                        (r.data||'').includes(q) ||
-                        horaFmt.includes(q);
-      const matchAtend = !selAtend || r.atendente === selAtend;
-      const matchGuiche = !selGuiche || r.nome_guiche === selGuiche;
-      const matchTipo = !selTipo || (selTipo === 'preferencial' ? r.preferencial : !r.preferencial);
-      return matchText && matchAtend && matchGuiche && matchTipo;
+    const atendMap = {};
+    data.forEach(r => {
+      if (r.atendente) atendMap[r.atendente] = (atendMap[r.atendente] || 0) + 1;
+    });
+    let topAtend = '—', maxAtend = 0;
+    Object.entries(atendMap).forEach(([atend, count]) => {
+      if (count > maxAtend) { maxAtend = count; topAtend = atend; }
     });
 
-    const periodo = calcularPeriodo();
-    renderKPIs(filteredRelatorioData, periodo);
-    renderCharts(filteredRelatorioData);
-    renderRelatorio(filteredRelatorioData);
-  }
-
-  function renderKPIs(rows, periodo) {
-    const total = rows.length;
-    const prefs = rows.filter(r => r.preferencial).length;
-    const normais = total - prefs;
-    const pctPref = total > 0 ? Math.round((prefs / total) * 100) : 0;
-
-    // Top Atendente
-    const porAtend = {};
-    rows.forEach(r => { if (r.atendente) porAtend[r.atendente] = (porAtend[r.atendente] || 0) + 1; });
-    const topAtend = Object.entries(porAtend).sort((a,b) => b[1] - a[1])[0];
-
-    // Top Guichê
-    const porGuiche = {};
-    rows.forEach(r => { if (r.nome_guiche) porGuiche[r.nome_guiche] = (porGuiche[r.nome_guiche] || 0) + 1; });
-    const topGuiche = Object.entries(porGuiche).sort((a,b) => b[1] - a[1])[0];
-
-    // Horário de Pico
-    const porHora = {};
-    rows.forEach(r => {
-      const hStr = converterHora(r.hora, r.criado_em);
-      if (hStr && hStr.includes(':')) {
-        const h = hStr.split(':')[0] + 'h';
-        porHora[h] = (porHora[h] || 0) + 1;
+    const horaMap = {};
+    data.forEach(r => {
+      let h = null;
+      if (r.criado_em) {
+        try {
+          const str = typeof r.criado_em === 'string' ? r.criado_em.replace(' ', 'T') : r.criado_em;
+          const isoStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+          const dt = new Date(isoStr);
+          if (!isNaN(dt.getTime())) {
+            const fortMs = dt.getTime() - (3 * 60 * 60 * 1000);
+            h = new Date(fortMs).getUTCHours();
+          }
+        } catch(e) {}
+      }
+      if (h === null && r.hora) {
+        const parts = r.hora.split(':');
+        if (parts.length >= 1) h = parseInt(parts[0]);
+      }
+      if (h !== null && !isNaN(h)) {
+        horaMap[h] = (horaMap[h] || 0) + 1;
       }
     });
-    const topHora = Object.entries(porHora).sort((a,b) => b[1] - a[1])[0];
 
-    const container = document.getElementById('rel-kpis');
-    if (!container) return;
+    let picoHora = '—', maxHora = 0;
+    Object.entries(horaMap).forEach(([h, count]) => {
+      if (count > maxHora) {
+        maxHora = count;
+        picoHora = `${String(h).padStart(2,'0')}:00 - ${String(Number(h)+1).padStart(2,'0')}:00 (${count})`;
+      }
+    });
 
-    container.innerHTML = `
+    const kpiEl = document.getElementById('rel-kpis');
+    kpiEl.innerHTML = `
       <div class="kpi-card">
         <div class="kpi-title">📋 Total Atendimentos</div>
         <div class="kpi-value">${total}</div>
-        <div class="kpi-sub">Normal: ${normais} | Pref: ${prefs}</div>
+        <div class="kpi-sub">Senhas concluídas</div>
       </div>
       <div class="kpi-card kpi-amber">
-        <div class="kpi-title">⭐ Taxa Preferencial</div>
-        <div class="kpi-value">${pctPref}%</div>
-        <div class="kpi-sub">${prefs} de ${total} chamadas</div>
+        <div class="kpi-title">⭐ Preferenciais</div>
+        <div class="kpi-value">${pref} <span style="font-size:14px;font-weight:normal;opacity:.8">(${pctPref}%)</span></div>
+        <div class="kpi-sub">${norm} normais atendidos</div>
       </div>
       <div class="kpi-card kpi-green">
         <div class="kpi-title">🏆 Atendente Destaque</div>
-        <div class="kpi-value">${topAtend ? topAtend[0] : '—'}</div>
-        <div class="kpi-sub">${topAtend ? topAtend[1] + ' atendimentos' : 'Sem dados'}</div>
-      </div>
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-title">🖥️ Guichê Mais Ativo</div>
-        <div class="kpi-value">${topGuiche ? topGuiche[0] : '—'}</div>
-        <div class="kpi-sub">${topGuiche ? topGuiche[1] + ' atendimentos' : 'Sem dados'}</div>
+        <div class="kpi-value" style="font-size:18px">${topAtend}</div>
+        <div class="kpi-sub">${maxAtend > 0 ? maxAtend + ' atendimentos' : 'Sem registros'}</div>
       </div>
       <div class="kpi-card kpi-purple">
-        <div class="kpi-title">🔥 Horário de Pico</div>
-        <div class="kpi-value">${topHora ? topHora[0] : '—'}</div>
-        <div class="kpi-sub">${topHora ? topHora[1] + ' chamadas nessa hora' : 'Sem dados'}</div>
+        <div class="kpi-title">⏰ Horário de Pico</div>
+        <div class="kpi-value" style="font-size:16px">${picoHora}</div>
+        <div class="kpi-sub">${maxHora > 0 ? 'Maior fluxo de cidadãos' : 'Sem dados'}</div>
       </div>
     `;
   }
 
-  function renderCharts(rows) {
-    if (typeof Chart === 'undefined') return;
+  function atualizarGraficos(data) {
+    const horasLabels = ['07h','08h','09h','10h','11h','12h','13h','14h','15h','16h','17h','18h'];
+    const horasNormal = new Array(12).fill(0);
+    const horasPref   = new Array(12).fill(0);
 
-    // 1. Gráfico Horários de Pico
-    const horasMap = { '07h':0,'08h':0,'09h':0,'10h':0,'11h':0,'12h':0,'13h':0,'14h':0,'15h':0,'16h':0,'17h':0,'18h':0 };
-    rows.forEach(r => {
-      const hStr = converterHora(r.hora, r.criado_em);
-      if (hStr && hStr.includes(':')) {
-        const h = hStr.split(':')[0] + 'h';
-        if (horasMap[h] !== undefined) horasMap[h]++;
+    data.forEach(r => {
+      let h = null;
+      if (r.criado_em) {
+        try {
+          const str = typeof r.criado_em === 'string' ? r.criado_em.replace(' ', 'T') : r.criado_em;
+          const isoStr = str.endsWith('Z') || str.includes('+') ? str : str + 'Z';
+          const dt = new Date(isoStr);
+          if (!isNaN(dt.getTime())) {
+            const fortMs = dt.getTime() - (3 * 60 * 60 * 1000);
+            h = new Date(fortMs).getUTCHours();
+          }
+        } catch(e) {}
+      }
+      if (h === null && r.hora) {
+        const p = r.hora.split(':');
+        if (p.length >= 1) h = parseInt(p[0]);
+      }
+      if (h !== null && !isNaN(h) && h >= 7 && h <= 18) {
+        const idx = h - 7;
+        if (r.preferencial) horasPref[idx]++;
+        else horasNormal[idx]++;
       }
     });
 
-    const canvasPico = document.getElementById('chart-pico');
-    if (canvasPico) {
+    const ctxPico = document.getElementById('chart-pico');
+    if (ctxPico) {
       if (chartPicoInstance) chartPicoInstance.destroy();
-      const ctx = canvasPico.getContext('2d');
-      chartPicoInstance = new Chart(ctx, {
+      chartPicoInstance = new Chart(ctxPico, {
         type: 'bar',
         data: {
-          labels: Object.keys(horasMap),
-          datasets: [{
-            label: 'Atendimentos',
-            data: Object.values(horasMap),
-            backgroundColor: 'rgba(255, 109, 45, 0.75)',
-            borderColor: '#FF6D2D',
-            borderWidth: 1,
-            borderRadius: 4
-          }]
+          labels: horasLabels,
+          datasets: [
+            { label: 'Normal', data: horasNormal, backgroundColor: '#185FA5', borderRadius: 4 },
+            { label: 'Preferencial', data: horasPref, backgroundColor: '#FF6D2D', borderRadius: 4 }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
           scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          }
+            x: { stacked: true, grid: { display: false } },
+            y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+          },
+          plugins: { legend: { position: 'top', labels: { boxWidth: 12 } } }
         }
       });
     }
 
-    // 2. Gráfico por Atendente
-    const atendentesMap = {};
-    rows.forEach(r => {
-      const a = r.atendente || 'Sem Atendente';
-      atendentesMap[a] = (atendentesMap[a] || 0) + 1;
+    const atendMap = {};
+    data.forEach(r => {
+      const a = r.atendente || 'Sem identificação';
+      atendMap[a] = (atendMap[a] || 0) + 1;
     });
 
-    const sortedAtend = Object.entries(atendentesMap).sort((a,b) => b[1] - a[1]);
-    const labelsAtend = sortedAtend.map(x => x[0]);
-    const dataAtend = sortedAtend.map(x => x[1]);
+    const sortedAtends = Object.entries(atendMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const labelsAtend = sortedAtends.map(x => x[0]);
+    const valuesAtend = sortedAtends.map(x => x[1]);
 
-    const canvasAtend = document.getElementById('chart-atendentes');
-    if (canvasAtend) {
+    const ctxAtend = document.getElementById('chart-atendentes');
+    if (ctxAtend) {
       if (chartAtendentesInstance) chartAtendentesInstance.destroy();
-      const ctx = canvasAtend.getContext('2d');
-      chartAtendentesInstance = new Chart(ctx, {
-        type: 'bar',
+      chartAtendentesInstance = new Chart(ctxAtend, {
+        type: 'doughnut',
         data: {
-          labels: labelsAtend.length ? labelsAtend : ['Nenhum'],
+          labels: labelsAtend.length ? labelsAtend : ['Sem atendimentos'],
           datasets: [{
-            label: 'Atendimentos',
-            data: dataAtend.length ? dataAtend : [0],
-            backgroundColor: 'rgba(24, 95, 165, 0.75)',
-            borderColor: '#185FA5',
-            borderWidth: 1,
-            borderRadius: 4
+            data: valuesAtend.length ? valuesAtend : [1],
+            backgroundColor: valuesAtend.length ? [
+              '#FF6D2D', '#185FA5', '#2d8a4e', '#854F0B', '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'
+            ] : ['#e2e0d8']
           }]
         },
         options: {
-          indexAxis: 'y',
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { beginAtZero: true, ticks: { precision: 0 } }
-          }
+          plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
         }
       });
     }
   }
 
-  function renderRelatorio(rows) {
-    document.getElementById('rel-body').innerHTML = !rows.length
-      ? '<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">Nenhum atendimento encontrado para os filtros selecionados</td></tr>'
-      : rows.map((r,i) => `
-          <tr>
-            <td class="text-muted">${rows.length - i}</td>
-            <td style="font-size:12px;color:var(--text-muted)">${r.data || ''}</td>
-            <td><strong>${r.num}</strong></td>
-            <td>${r.preferencial ? '<span class="badge badge-amber">Preferencial</span>' : '<span class="badge badge-gray">Normal</span>'}</td>
-            <td>${r.nome_guiche}</td>
-            <td>${r.atendente || '—'}</td>
-            <td>${converterHora(r.hora, r.criado_em)}</td>
-          </tr>`).join('');
+  function filtrarRel() {
+    const busca = (document.getElementById('filtro-rel').value || '').toLowerCase();
+    const atend = document.getElementById('filtro-atendente').value;
+    const guiche = document.getElementById('filtro-guiche').value;
+    const tipo = document.getElementById('filtro-tipo').value;
+
+    const filtrados = relatorioData.filter(r => {
+      const matchBusca = !busca ||
+        (r.num && r.num.toLowerCase().includes(busca)) ||
+        (r.atendente && r.atendente.toLowerCase().includes(busca)) ||
+        (r.nome_guiche && r.nome_guiche.toLowerCase().includes(busca));
+      const matchAtend = !atend || r.atendente === atend;
+      const matchGuiche = !guiche || r.nome_guiche === guiche;
+      const matchTipo = !tipo || (tipo === 'preferencial' ? r.preferencial : !r.preferencial);
+      return matchBusca && matchAtend && matchGuiche && matchTipo;
+    });
+
+    const tbody = document.getElementById('rel-body');
+    if (filtrados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:2rem">Nenhum atendimento encontrado</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtrados.map((r, i) => `
+      <tr>
+        <td class="text-muted">${filtrados.length - i}</td>
+        <td>${r.data || '—'}</td>
+        <td><strong>${r.num || '—'}</strong></td>
+        <td>${r.preferencial ? '<span class="badge badge-amber">★ Preferencial</span>' : '<span class="badge badge-blue">Normal</span>'}</td>
+        <td>${r.nome_guiche || '—'}</td>
+        <td>${r.atendente || '<span class="text-muted">—</span>'}</td>
+        <td class="text-muted">${converterHora(r.hora, r.criado_em)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function filtrarPeriodo(tipo) {
+    document.querySelectorAll('.periodo-btns button').forEach(b => b.classList.remove('btn-primary'));
+    const btn = document.getElementById('fp-' + tipo);
+    if (btn) btn.classList.add('btn-primary');
+
+    const customBox = document.getElementById('custom-dates');
+    if (tipo === 'custom') {
+      customBox.style.display = 'flex';
+    } else {
+      customBox.style.display = 'none';
+      carregarRelatorio();
+    }
   }
 
   function exportarCSV() {
-    const dataExport = filteredRelatorioData.length ? filteredRelatorioData : relatorioData;
-    if (!dataExport.length) { alert('Nenhum dado para exportar.'); return; }
+    if (!relatorioData || relatorioData.length === 0) {
+      mostrarToast('Não há dados para exportar no período selecionado.', 'error');
+      return;
+    }
 
-    const header = 'Senha,Tipo,Guichê,Atendente,Hora,Data\n';
-    const rows = dataExport.map(r =>
-      `"${r.num}","${r.preferencial?'Preferencial':'Normal'}","${r.nome_guiche||''}","${r.atendente||''}","${converterHora(r.hora, r.criado_em)}","${r.data||''}"`
-    ).join('\n');
+    const headers = ['Data', 'Senha', 'Tipo', 'Guichê', 'Atendente', 'Hora'];
+    const rows = relatorioData.map(r => [
+      r.data || '',
+      r.num || '',
+      r.preferencial ? 'Preferencial' : 'Normal',
+      `"${(r.nome_guiche || '').replace(/"/g, '""')}"`,
+      `"${(r.atendente || '').replace(/"/g, '""')}"`,
+      converterHora(r.hora, r.criado_em)
+    ]);
 
-    // BOM UTF-8 (\uFEFF) garante acentuação correta no Excel
-    const blob = new Blob(['\uFEFF' + header + rows], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `relatorio-acolhimento-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`;
-    a.click();
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `relatorio-acolhimento-${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function exportarPDF() {
-    const dataExport = filteredRelatorioData.length ? filteredRelatorioData : relatorioData;
-    if (!dataExport.length) { alert('Nenhum dado para exportar.'); return; }
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const hoje = new Date(), W = 210, M = 14; let y = 14;
-
-    // Cabeçalho da Prefeitura
-    doc.setFillColor(255, 109, 45); doc.rect(0, 0, W, 28, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-    doc.text('PREFEITURA DE FORTALEZA', M, 11);
-    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    doc.text('Secretaria Regional 6 — Setor de Acolhimento', M, 18);
-    doc.setFontSize(9);
-    doc.text(`Emitido em: ${hoje.toLocaleDateString('pt-BR')} às ${hoje.toLocaleTimeString('pt-BR')}`, M, 24);
-
-    y = 36;
-    doc.setTextColor(255, 109, 45); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
-    doc.text('Relatório Gerencial de Atendimentos', M, y); y += 6;
-    doc.setDrawColor(200, 200, 200); doc.line(M, y, W - M, y); y += 6;
-
-    // Indicadores / KPIs para o PDF
-    const total = dataExport.length;
-    const prefs = dataExport.filter(r => r.preferencial).length;
-    const normais = total - prefs;
-    const pctPref = total > 0 ? Math.round((prefs / total) * 100) : 0;
-
-    const porAtend = {};
-    dataExport.forEach(r => { if (r.atendente) porAtend[r.atendente] = (porAtend[r.atendente] || 0) + 1; });
-    const topAtend = Object.entries(porAtend).sort((a,b) => b[1] - a[1])[0];
-
-    const porGuiche = {};
-    dataExport.forEach(r => { if (r.nome_guiche) porGuiche[r.nome_guiche] = (porGuiche[r.nome_guiche] || 0) + 1; });
-    const topGuiche = Object.entries(porGuiche).sort((a,b) => b[1] - a[1])[0];
-
-    const porHora = {};
-    dataExport.forEach(r => {
-      const hStr = converterHora(r.hora, r.criado_em);
-      if (hStr && hStr.includes(':')) {
-        const h = hStr.split(':')[0] + 'h';
-        porHora[h] = (porHora[h] || 0) + 1;
-      }
-    });
-    const topHora = Object.entries(porHora).sort((a,b) => b[1] - a[1])[0];
-
-    // Cards de Indicadores no PDF (Linha 1: Total, Pref %, Horário Pico)
-    const cW3 = (W - M * 2 - 8) / 3;
-    const cardsRow1 = [
-      { label: 'Total Atendimentos', valor: String(total), sub: `Norm: ${normais} | Pref: ${prefs}`, cor: [255, 109, 45] },
-      { label: 'Taxa Preferencial', valor: `${pctPref}%`, sub: `${prefs} de ${total} chamadas`, cor: [217, 119, 6] },
-      { label: 'Horário de Pico', valor: topHora ? topHora[0] : '—', sub: topHora ? `${topHora[1]} chamadas nessa hora` : 'Sem dados', cor: [139, 92, 246] }
-    ];
-
-    cardsRow1.forEach((c, i) => {
-      const x = M + i * (cW3 + 4);
-      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW3, 17, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-      doc.text(c.label.toUpperCase(), x + 4, y + 4.8);
-      doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-      doc.text(c.valor, x + 4, y + 11);
-      doc.setFontSize(7); doc.setFont('helvetica', 'normal');
-      doc.text(c.sub, x + 4, y + 15);
-    });
-
-    y += 20;
-
-    // Linha 2: Atendente Destaque, Guichê Mais Ativo
-    const cW2 = (W - M * 2 - 4) / 2;
-    const cardsRow2 = [
-      { label: 'Atendente Destaque', valor: topAtend ? topAtend[0] : '—', sub: topAtend ? `${topAtend[1]} atendimentos` : 'Sem dados', cor: [22, 163, 74] },
-      { label: 'Guichê Mais Ativo', valor: topGuiche ? topGuiche[0] : '—', sub: topGuiche ? `${topGuiche[1]} atendimentos` : 'Sem dados', cor: [24, 95, 165] }
-    ];
-
-    cardsRow2.forEach((c, i) => {
-      const x = M + i * (cW2 + 4);
-      doc.setFillColor(...c.cor); doc.roundedRect(x, y, cW2, 17, 2, 2, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-      doc.text(c.label.toUpperCase(), x + 4, y + 4.8);
-      doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-      doc.text(c.valor, x + 4, y + 11);
-      doc.setFontSize(7); doc.setFont('helvetica', 'normal');
-      doc.text(c.sub, x + 4, y + 15);
-    });
-
-    y += 22;
-
-    // Tabela
-    const cols = [
-      { label: '#', w: 12 },
-      { label: 'Senha', w: 26 },
-      { label: 'Tipo', w: 34 },
-      { label: 'Guichê', w: 36 },
-      { label: 'Atendente', w: 50 },
-      { label: 'Hora', w: 24 }
-    ];
-
-    doc.setFillColor(240, 242, 246); doc.rect(M, y, W - M * 2, 7, 'F');
-    doc.setTextColor(50, 50, 50); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-    let cx = M + 2; cols.forEach(c => { doc.text(c.label, cx, y + 4.8); cx += c.w; }); y += 7;
-
-    doc.setFont('helvetica', 'normal');
-    dataExport.slice().reverse().forEach((r, i) => {
-      if (y + 6.5 > 280) {
-        doc.addPage();
-        y = 14;
-        // Re-desenha cabeçalho de tabela na nova página
-        doc.setFillColor(240, 242, 246); doc.rect(M, y, W - M * 2, 7, 'F');
-        doc.setTextColor(50, 50, 50); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
-        cx = M + 2; cols.forEach(c => { doc.text(c.label, cx, y + 4.8); cx += c.w; }); y += 7;
-        doc.setFont('helvetica', 'normal');
-      }
-
-      if (i % 2 === 0) { doc.setFillColor(250, 250, 252); doc.rect(M, y, W - M * 2, 6.5, 'F'); }
-      doc.setTextColor(30, 30, 30); cx = M + 2;
-
-      const vals = [
-        String(dataExport.length - i),
-        r.num || '',
-        r.preferencial ? '★ Preferencial' : 'Normal',
-        r.nome_guiche || '',
-        r.atendente || '—',
-        converterHora(r.hora, r.criado_em)
-      ];
-
-      vals.forEach((v, ci) => {
-        if (ci === 2 && r.preferencial) doc.setTextColor(133, 79, 11);
-        else doc.setTextColor(30, 30, 30);
-        doc.text(v, cx, y + 4.3, { maxWidth: cols[ci].w - 2 });
-        cx += cols[ci].w;
-      });
-
-      doc.setDrawColor(230, 230, 235); doc.line(M, y + 6.5, W - M, y + 6.5); y += 6.5;
-    });
-
-    const totalPages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= totalPages; p++) {
-      doc.setPage(p); doc.setFontSize(8); doc.setTextColor(160, 160, 160);
-      doc.text(`Prefeitura de Fortaleza — Regional 6 — Acolhimento  |  Página ${p} de ${totalPages}`, W / 2, 292, { align: 'center' });
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      mostrarToast('Biblioteca PDF carregando...', 'info');
+      return;
     }
-
-    doc.save(`relatorio-acolhimento-${hoje.toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text('Relatório de Atendimentos — Acolhimento', 14, 20);
+    doc.save('relatorio.pdf');
   }
 
   // ── Usuários ──
@@ -1361,14 +1673,23 @@ tr:hover td{background:var(--bg)}
     try {
       const d = await fetch('/api/estado').then(r => r.json());
       guichesData = d.guiches || [];
+      filaData = d.fila || [];
       renderGuiches(guichesData);
       atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
       popularSelectGuiches(guichesData);
       atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
       atualizarProximas(d.contadorNormal, d.contadorPref, d.contadorBaseNormal, d.contadorBasePref);
+      filtrarFilaLocal();
       await carregarRelatorio();
     } catch(e) { console.error(e); }
   }
+
+  // Recalcula tempos de espera a cada 30 segundos
+  setInterval(() => {
+    if (filaData.length > 0) {
+      filtrarFilaLocal();
+    }
+  }, 30000);
 
   SGA.iniciarRealtime();
   SGA.carregarEstado();
