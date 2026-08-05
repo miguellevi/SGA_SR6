@@ -6,16 +6,18 @@ module.exports = async function handler(req, res) {
   try {
     const [{ data: guiches }, { data: fila }, { data: tipos }, { data: config }] = await Promise.all([
       supabase.from('guiches').select('*').order('id'),
-      supabase.from('fila').select('*').order('criado_em'),
+      supabase.from('fila').select('*').order('preferencial', { ascending: false }).order('criado_em', { ascending: true }),
       supabase.from('tipos_senha').select('*').eq('ativo', true).order('id'),
       supabase.from('config').select('*').eq('id', 1).single()
     ]);
 
-    const filaNormal = (fila || []).filter(s => !s.preferencial);
-    const filaPref   = (fila || []).filter(s => s.preferencial);
+    const filaList = fila || [];
+    const filaNormal = filaList.filter(s => !s.preferencial);
+    const filaPref   = filaList.filter(s => s.preferencial);
 
     return res.json({
       guiches:            guiches || [],
+      fila:               filaList,
       filaNormalQtd:      filaNormal.length,
       filaPrefQtd:        filaPref.length,
       tiposSenha:         tipos || [],
