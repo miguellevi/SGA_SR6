@@ -828,22 +828,33 @@ tr:hover td{background:var(--bg)}
     }, 4000);
   }
 
+  function isPref(val) {
+    return val === true || val === 'true' || val === 1 || val === 't';
+  }
+
   // ── Realtime & Eventos ──
   SGA.on('estado_inicial', d => {
     guichesData = d.guiches || [];
-    filaData = d.fila || [];
+    if (Array.isArray(d.fila)) {
+      filaData = d.fila;
+    }
     renderGuiches(guichesData);
     popularSelectGuiches(guichesData);
     atualizarStats(d.filaNormalQtd, d.filaPrefQtd, guichesData);
     atualizarChFila(d.filaNormalQtd, d.filaPrefQtd);
     atualizarProximas(d.contadorNormal, d.contadorPref, d.contadorBaseNormal, d.contadorBasePref);
-    renderFilaEspera(filaData);
+    filtrarFilaLocal();
     carregarRelatorio();
+    carregarFilaDireta();
   });
 
   SGA.on('nova_chamada', c => {
     mostrarUltimaChamada(c);
     mostrarToast(`Senha <strong>${c.num}</strong> chamada para o <strong>${c.nomeGuiche}</strong>`, 'success');
+    if (Array.isArray(c.fila)) {
+      filaData = c.fila;
+      filtrarFilaLocal();
+    }
     atualizarTudo();
   });
 
@@ -854,7 +865,7 @@ tr:hover td{background:var(--bg)}
   SGA.on('fila_atualizada', d => {
     if (d && Array.isArray(d.fila)) {
       filaData = d.fila;
-      renderFilaEspera(filaData);
+      filtrarFilaLocal();
     } else {
       carregarFilaDireta();
     }
@@ -1088,11 +1099,15 @@ tr:hover td{background:var(--bg)}
   }
 
   function filtrarFilaLocal() {
-    const termo = (document.getElementById('busca-fila-input').value || '').trim().toLowerCase();
+    const inputEl = document.getElementById('busca-fila-input');
+    const termo = (inputEl ? inputEl.value : '').trim().toLowerCase();
     
     let lista = [...filaData];
-    if (filtroFilaAtivo === 'pref')   lista = lista.filter(s => s.preferencial);
-    if (filtroFilaAtivo === 'normal') lista = lista.filter(s => !s.preferencial);
+    if (filtroFilaAtivo === 'pref') {
+      lista = lista.filter(s => isPref(s.preferencial));
+    } else if (filtroFilaAtivo === 'normal') {
+      lista = lista.filter(s => !isPref(s.preferencial));
+    }
 
     if (termo) {
       lista = lista.filter(s => {
@@ -1107,6 +1122,7 @@ tr:hover td{background:var(--bg)}
 
   function renderFilaEspera(lista) {
     const container = document.getElementById('fila-lista-conteudo');
+    if (!container) return;
     if (!lista || lista.length === 0) {
       container.innerHTML = `
         <div style="padding:2.5rem 1rem;text-align:center;color:var(--text-muted)">
@@ -1118,7 +1134,7 @@ tr:hover td{background:var(--bg)}
     }
 
     container.innerHTML = lista.map((s, idx) => {
-      const isPref = s.preferencial;
+      const isPreferencial = isPref(s.preferencial);
       const espera = calcularTempoEspera(s.criado_em);
       const horaStr = s.criado_em ? new Date(s.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
 
@@ -1126,10 +1142,10 @@ tr:hover td{background:var(--bg)}
         <div class="fila-item" id="fila-item-${s.id}">
           <div class="fila-item-left">
             <span class="fila-pos">${idx + 1}º</span>
-            <span class="fila-senha-badge ${isPref ? 'pref' : 'normal'}">${s.num}</span>
+            <span class="fila-senha-badge ${isPreferencial ? 'pref' : 'normal'}">${s.num}</span>
             <div class="fila-item-info">
               <div class="fila-item-tipo">
-                ${isPref ? '⭐ ' : ''}${s.tipo_label || (isPref ? 'Preferencial' : 'Normal')}
+                ${isPreferencial ? '⭐ ' : ''}${s.tipo_label || (isPreferencial ? 'Preferencial' : 'Normal')}
               </div>
               <div class="fila-item-espera">
                 <span>Emitida às ${horaStr || '—'}</span>
@@ -1153,12 +1169,26 @@ tr:hover td{background:var(--bg)}
 
   async function carregarFilaDireta() {
     try {
-      const res = await SGA.fetch('/api/dados?recurso=fila');
-      if (res.ok && Array.isArray(res.fila)) {
-        filaData = res.fila;
+      let filaRecebida = null;
+      try {
+        const res = await SGA.fetch('/api/dados?recurso=fila');
+        if (res && res.ok && Array.isArray(res.fila)) {
+          filaRecebida = res.fila;
+        }
+      } catch(e) {}
+
+      if (!filaRecebida) {
+        const resEstado = await fetch('/api/estado').then(r => r.json());
+        if (resEstado && Array.isArray(resEstado.fila)) {
+          filaRecebida = resEstado.fila;
+        }
+      }
+
+      if (Array.isArray(filaRecebida)) {
+        filaData = filaRecebida;
         filtrarFilaLocal();
-        const norm = filaData.filter(s => !s.preferencial).length;
-        const pref = filaData.filter(s => s.preferencial).length;
+        const norm = filaData.filter(s => !isPref(s.preferencial)).length;
+        const pref = filaData.filter(s => isPref(s.preferencial)).length;
         atualizarStats(norm, pref, guichesData);
         atualizarChFila(norm, pref);
       }
