@@ -5,7 +5,6 @@ const { verificarAuth, somenteCoord } = require('./_auth');
 // 1º — guichê ativo e livre (sem senha) com menos atendimentos hoje
 // 2º — se todos ocupados, o que tem menos atendimentos
 async function selecionarGuicheAuto() {
-  // Busca todos os guichês ativos
   const { data: guiches } = await supabase
     .from('guiches')
     .select('*')
@@ -26,7 +25,6 @@ async function selecionarGuicheAuto() {
     contagem[r.guiche_id] = (contagem[r.guiche_id] || 0) + 1;
   });
 
-  // Adiciona contagem a cada guichê
   const comContagem = guiches.map(g => ({
     ...g,
     atendimentos: contagem[g.id] || 0
@@ -35,7 +33,6 @@ async function selecionarGuicheAuto() {
   // 1º tenta guichê livre (sem senha atual)
   const livres = comContagem.filter(g => !g.senha_atual);
   if (livres.length > 0) {
-    // Pega o livre com menos atendimentos
     return livres.sort((a, b) => a.atendimentos - b.atendimentos)[0];
   }
 
@@ -50,24 +47,46 @@ module.exports = async function handler(req, res) {
     const usuario = await verificarAuth(req);
     if (!somenteCoord(usuario, res)) return;
 
-    const { guicheId, auto } = req.body;
+    const { guicheId, auto, senhaId, senhaNum } = req.body || {};
 
-    // Pega próxima senha da fila (preferencial primeiro)
-    const { data: fila } = await supabase.from('fila').select('*')
-      .order('preferencial', { ascending: false })
-      .order('criado_em',    { ascending: true })
-      .limit(1);
+    let senha = null;
 
-    if (!fila || fila.length === 0) return res.json({ ok: false, erro: 'Fila vazia' });
+    // 1. Se informou ID da senha específico
+    if (senhaId) {
+      const { data: filaItem } = await supabase.from('fila').select('*').eq('id', senhaId).single();
+      if (filaItem) {
+        senha = filaItem;
+      }
+    }
 
-    const senha = fila[0];
+    // 2. Se informou número da senha (ex: "P002", "005")
+    if (!senha && senhaNum) {
+      const numTrim = String(senhaNum).trim().toUpperCase();
+      const { data: filaList } = await supabase.from('fila').select('*');
+      senha = (filaList || []).find(s => s.num && s.num.toUpperCase() === numTrim);
+    }
+
+    // 3. Caso padrão: Pega próxima senha da fila (preferencial primeiro)
+    if (!senha && !senhaId && !senhaNum) {
+      const { data: fila } = await supabase.from('fila').select('*')
+        .order('preferencial', { ascending: false })
+        .order('criado_em',    { ascending: true })
+        .limit(1);
+
+      if (!fila || fila.length === 0) return res.json({ ok: false, erro: 'Fila vazia. Não há senhas aguardando atendimento.' });
+      senha = fila[0];
+    }
+
+    if (!senha) {
+      return res.json({ ok: false, erro: 'A senha selecionada não foi encontrada na fila de espera.' });
+    }
 
     // Determina o guichê destino
     let guiche;
-    if (auto) {
+    if (auto || !guicheId) {
       // Modo automático — sistema escolhe
       guiche = await selecionarGuicheAuto();
-      if (!guiche) return res.json({ ok: false, erro: 'Nenhum guichê ativo. Peça aos atendentes para selecionar seus guichês.' });
+      if (!guiche) return res.json({ ok: false, erro: 'Nenhum guichê ativo no momento. Peça aos atendentes para selecionar seus guichês.' });
     } else {
       // Modo manual — coordenador escolheu
       const { data } = await supabase.from('guiches').select('*').eq('id', guicheId).single();
@@ -100,9 +119,15 @@ module.exports = async function handler(req, res) {
     });
 
     // Fila atualizada para broadcast
-    const { data: filaAtual } = await supabase.from('fila').select('preferencial');
-    const filaNormalQtd = (filaAtual || []).filter(s => !s.preferencial).length;
-    const filaPrefQtd   = (filaAtual || []).filter(s =>  s.preferencial).length;
+    const { data: filaAtual } = await supabase
+      .from('fila')
+      .select('*')
+      .order('preferencial', { ascending: false })
+      .order('criado_em', { ascending: true });
+
+    const filaList = filaAtual || [];
+    const filaNormalQtd = filaList.filter(s => !s.preferencial).length;
+    const filaPrefQtd   = filaList.filter(s =>  s.preferencial).length;
 
     // Publica evento Realtime
     await supabase.from('eventos').insert({
@@ -113,15 +138,23 @@ module.exports = async function handler(req, res) {
         nomeGuiche:   guiche.nome,
         atendente:    guiche.atendente || usuario.nome,
         preferencial: senha.preferencial,
-        hora, filaNormalQtd, filaPrefQtd,
-        modoAuto:     !!auto
+        hora,
+        filaNormalQtd,
+        filaPrefQtd,
+        fila:         filaList,
+        modoAuto:     !!auto,
+        escolhidaManualmente: Boolean(senhaId || senhaNum)
       }),
       criado_em: agora
     });
 
     return res.json({
       ok: true,
+      senha: senha.num,
+      preferencial: senha.preferencial,
+      tipo_label: senha.tipo_label,
       guicheEscolhido: guiche.nome,
+      guicheId: guiche.id,
       modoAuto: !!auto
     });
 
