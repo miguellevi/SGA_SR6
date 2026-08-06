@@ -1,9 +1,13 @@
 const { supabase } = require('../lib/supabase');
+const { verificarEResetarViradaDia } = require('./_dia');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    // 0. Verifica se virou o dia para resetar automaticamente os contadores para 001
+    await verificarEResetarViradaDia();
+
     const { tipoId } = req.body || {};
 
     const { data: tipo } = await supabase
