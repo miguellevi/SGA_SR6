@@ -1,9 +1,13 @@
 const { supabase } = require('../lib/supabase');
+const { verificarEResetarViradaDia } = require('./_dia');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
 
   try {
+    // 0. Verifica se virou o dia antes de devolver o estado
+    await verificarEResetarViradaDia();
+
     const [{ data: guiches }, { data: fila }, { data: tipos }, { data: config }] = await Promise.all([
       supabase.from('guiches').select('*').order('id'),
       supabase.from('fila').select('*').order('preferencial', { ascending: false }).order('criado_em', { ascending: true }),
