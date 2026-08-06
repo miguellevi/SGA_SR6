@@ -63,6 +63,9 @@
 
     if (res.ok) {
       localStorage.setItem('sga_token',  res.token);
+      if (res.refreshToken) {
+        localStorage.setItem('sga_refresh_token', res.refreshToken);
+      }
       localStorage.setItem('sga_perfil', res.perfil);
       localStorage.setItem('sga_nome',   res.nome);
       window.location.href = res.perfil === 'coordenador' ? '/coordenador' : '/operador';
