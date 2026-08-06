@@ -39,6 +39,8 @@ module.exports = async function handler(req, res) {
     return res.json({
       ok: true,
       token: data.session.access_token,
+      refreshToken: data.session.refresh_token,
+      expiresAt: data.session.expires_at,
       perfil: perfil.perfil,
       nome: perfil.nome
     });
